@@ -1,0 +1,9 @@
+1   Search for files of type 'image/jpeg' (is there a way to determine if the image is in the folder 'Receipts'?
+2   Download the file and generate a hash.
+3   Read the JSON document containing all receipts that have been converted to text.
+4   Search the document for the computed hash.
+5   If hash exists, this is a duplicate, so stop.
+6   Otherwise, convert image to text and store in document.
+7   Write the JSON file and the image to local storage. The document references the image.
+8   Remove the image from google drive.
+9   Enter event loop. An event will cause steps 1 - 8 to be executed.

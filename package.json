@@ -1,0 +1,23 @@
+{
+  "name": "google-drive",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/sanctuary": "^0.14.2",
+    "aws-sdk": "^2.471.0",
+    "axios": "^0.19.0",
+    "fluture": "^11.0.1",
+    "fluture-sanctuary-types": "^4.0.0",
+    "google-auth-library": "^4.1.0",
+    "googleapis": "^39.2.0",
+    "sanctuary": "^2.0.0",
+    "uuid": "^3.3.2"
+  }
+}
