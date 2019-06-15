@@ -16,7 +16,7 @@ const crypto = require ('crypto');
 const api = require ('./api');
 const {writeFile, readFile, inspect} = require ('./misc');
 
-const {detectText} = require ('../lib/detect_text');
+const {extractText} = require ('../lib/extract');
 
 
 /// helper functions ///////////////////
@@ -37,7 +37,7 @@ const extract_text = obj => S.map (text => ({
     name: obj.name,
     hash: imageHash (text),
     text
-})) (detectText (obj.content));
+})) (extractText (obj.content));
 
 
 // helper to write each image to local storage and return file id, name, hash, and captured text
@@ -66,6 +66,7 @@ const imageHash = textArray => {
 
 
 /// Top level functions follow //////////////////////
+// todo Optimize this such that each file is processed in parallel
 
 // read in the receipts.json file.
 // create the file if it doesn't exist.
@@ -127,15 +128,15 @@ const move_images = S.chain (obj => {
 ////////////////
 const run = S.pipe ([
     find_images,
-    inspect (),
+    inspect (console.log),
     download_contents,
-    inspect (),
+    inspect (console.log),
     process_files,
-    inspect (),
+    inspect (console.log),
     update_json,
-    inspect (),
+    inspect (console.log),
     save_json,
-    inspect (),
+    inspect (console.log),
     move_images
 ]) (receiptsFolderId);
 
