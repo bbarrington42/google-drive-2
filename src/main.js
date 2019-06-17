@@ -23,15 +23,18 @@ const {extractText} = require ('../lib/extract');
 
 // Retrieve file contents as a Buffer.
 // In addition to the Buffer, the file name and the id are returned
-const contents = file =>
-    S.map (res => ({id: file.id, name: file.name, content: Buffer.from (res.data)})) (api.get_file ({
+// file -> Future[{id, name, content}]
+const contents = file => {
+    console.log(`contents invoked: file ${JSON.stringify(file)}`);
+    return S.map (res => ({id: file.id, name: file.name, content: Buffer.from (res.data)})) (api.get_file ({
         responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
         params: {
             alt: 'media'
         }
     }) (file.id));
+};
 
-
+// obj -> Future[{id, name, hash, text}]
 const extract_text = obj => S.map (text => ({
     id: obj.id,
     name: obj.name,
@@ -41,12 +44,14 @@ const extract_text = obj => S.map (text => ({
 
 
 // helper to write each image to local storage and return file id, name, hash, and captured text
+// obj -> Future[obj]
+// todo Inspect this next!
 const process_file = obj => {
     const f = writeFile (obj.content) (`../data/${obj.name}`);
     return S.chain (extract_text) (S.map (() => obj) (f));
 };
 
-
+// [receipt...] -> json -> json
 const update_receipts = receipts => json => {
     const update_receipt = json => receipt => {
         json[receipt.hash] = {id: receipt.id, name: receipt.name, text: receipt.text};
@@ -58,6 +63,7 @@ const update_receipts = receipts => json => {
 
 
 // Accepts an array of text and returns a computed hash
+// [text] -> hex
 const imageHash = textArray => {
     const hash = crypto.createHash ('sha256');
     textArray.forEach (text => hash.update (text));
@@ -66,7 +72,6 @@ const imageHash = textArray => {
 
 
 /// Top level functions follow //////////////////////
-// todo Optimize this such that each file is processed in parallel
 
 // read in the receipts.json file.
 // create the file if it doesn't exist.
@@ -99,8 +104,9 @@ const find_images = S.chain (maybeId => {
 const download_contents = S.pipe ([
     // get the array of files
     S.map (filelist => filelist.files),
+    S.chain (files => Future.parallel (3) (S.map (contents) (files)))
     // transform to array of objects containing the name, hash and content
-    S.chain (S.traverse (Future) (contents))
+    //S.chain (S.traverse (Future) (contents))
 ]);
 
 
@@ -117,28 +123,28 @@ const save_json = S.chain (json => S.map (() => json) (writeFile (Buffer.from (J
 const processedReceiptsFolderId = folderId ('Processed Receipts');
 
 // load up a function in a Future
-const move_image = S.chain (from => S.map (to => api.move_file (S.maybeToNullable(from)) (S.maybeToNullable(to))) (processedReceiptsFolderId)) (receiptsFolderId);
+const move_image = S.chain (from => S.map (to => api.move_file (S.maybeToNullable (from)) (S.maybeToNullable (to))) (processedReceiptsFolderId)) (receiptsFolderId);
 
 
 const move_images = S.chain (obj => {
     const ids = S.map (key => obj[key].id) (Object.keys (obj));
-    return S.traverse (Future) (id => S.chain(move => move(id))(move_image)) (ids);
+    return S.traverse (Future) (id => S.chain (move => move (id)) (move_image)) (ids);
 });
 
 ////////////////
 const run = S.pipe ([
     find_images,
-    inspect (console.log),
+    inspect (images => console.log (`images: ${JSON.stringify (images)}`)),
     download_contents,
     inspect (console.log),
     process_files,
-    inspect (console.log),
+    inspect (),
     update_json,
-    inspect (console.log),
+    inspect (),
     save_json,
-    inspect (console.log),
+    inspect (),
     move_images
 ]) (receiptsFolderId);
 
 
-run.fork (console.error, res => console.log(JSON.stringify(res)));
+run.fork (console.error, res => console.log (JSON.stringify (res)));
