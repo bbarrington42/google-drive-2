@@ -34,6 +34,7 @@ const getFolderId = name => {
     const options = {params: {q: query}};
     return S.map (res => {
         const files = res.data.files;
+        // Success only if there is one resource
         return files.length === 1 ? S.map (file => ({
             id: file.id,
             name: file.name
@@ -41,15 +42,13 @@ const getFolderId = name => {
     }) (api.list_files (options));
 };
 
-const getMetaData = maybe => {
-  return S.maybe(Future.resolve([]))(({id}) => {
-      // Query for all files of type 'image/jpeg' with this id as a parent
-      const query = `'${id}' in parents and mimeType = 'image/jpeg'`;
-      const options = {params: {q: query}};
-      return S.map (res => res.data) (api.list_files (options));
-  })(maybe);
-};
-
+// given a Maybe {id:, name:} (parent folder), return a Future [file-resource] (children)
+const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
+    // Query for all files of type 'image/jpeg' with this id as a parent
+    const query = `'${id}' in parents and mimeType = 'image/jpeg'`;
+    const options = {params: {q: query}};
+    return S.map (res => res.data.files) (api.list_files (options));
+});
 
 
 ///////////////////
