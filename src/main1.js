@@ -52,7 +52,7 @@ const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
 
 // given a file metadata object ({kind:, id:, name:, mimeType:}), return a Future of the extracted-text
 const getText = meta => {
-    return Future.map (res => Buffer.from(res.data)) (api.get_file ({
+    return Future.chain (res => extractText(Buffer.from(res.data))) (api.get_file ({
         responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
         params: {
             alt: 'media'
@@ -72,7 +72,7 @@ const getText = meta => {
 // Testing
 const folderId = getFolderId ('Receipts');
 const meta = S.chain (getMetaData) (folderId);
-const buffers = S.chain(arr => Future.parallel(5) (S.map(getText) (arr))) (meta);
+const buffers = S.chain(arr => Future.parallel(1) (S.map(getText) (arr))) (meta);
 Future.fork (console.error, console.log) (buffers);
 //////////
 
