@@ -24,15 +24,13 @@ const {extractText} = require ('../lib/extract');
 // Retrieve file contents as a Buffer.
 // In addition to the Buffer, the file name and the id are returned
 // file -> Future[{id, name, content}]
-const contents = file => {
-    console.log(`contents invoked: file ${JSON.stringify(file)}`);
-    return S.map (res => ({id: file.id, name: file.name, content: Buffer.from (res.data)})) (api.get_file ({
+const contents = file => S.map (res => ({id: file.id, name: file.name, content: Buffer.from (res.data)})) (api.get_file ({
         responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
         params: {
             alt: 'media'
         }
     }) (file.id));
-};
+
 
 // obj -> Future[{id, name, hash, text}]
 const extract_text = obj => S.map (text => ({
@@ -45,8 +43,8 @@ const extract_text = obj => S.map (text => ({
 
 // helper to write each image to local storage and return file id, name, hash, and captured text
 // obj -> Future[obj]
-// todo Inspect this next!
 const process_file = obj => {
+    console.log(`process_file invoked, obj: ${obj.name}`);
     const f = writeFile (obj.content) (`../data/${obj.name}`);
     return S.chain (extract_text) (S.map (() => obj) (f));
 };
@@ -136,14 +134,14 @@ const run = S.pipe ([
     find_images,
     inspect (images => console.log (`images: ${JSON.stringify (images)}`)),
     download_contents,
-    inspect (console.log),
-    process_files,
     inspect (),
+    process_files,
+    inspect (a => console.log(`a: ${Object.keys(a)}`)),
     update_json,
     inspect (),
     save_json,
     inspect (),
-    move_images
+    //move_images
 ]) (receiptsFolderId);
 
 

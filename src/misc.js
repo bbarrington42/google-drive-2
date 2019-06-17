@@ -13,11 +13,11 @@ const Future = require ('fluture');
 const fs = require('fs');
 
 const writeFile = buffer => path => Future((reject, resolve) => {
-    fs.writeFile(path, buffer, err => err ? reject(err) : resolve(path));
+    fs.writeFile(path, buffer, err => err ? reject(`writeFile: ${err}`) : resolve(path));
 });
 
 const readFile = encoding => path => Future((reject, resolve) => {
-   fs.readFile(path, encoding, (err, data) => err ? reject(err) : resolve(data));
+   fs.readFile(path, encoding, (err, data) => err ? reject(`readFile: ${err}`) : resolve(data));
 });
 
 const inspect = (f = a => a) => S.map(a => {
