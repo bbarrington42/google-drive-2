@@ -12,7 +12,7 @@ const S = create ({
 
 const Future = require ('fluture');
 
-const api = require ('./api');
+const {list_files, get_file, move_file} = require ('./api');
 const {imageHash, writeFile, readFile, inspect} = require ('./misc');
 
 const {extractText} = require ('../lib/extract');
@@ -31,7 +31,7 @@ const getFolderId = name => {
             id: file.id,
             name: file.name
         })) (S.head (files)) : S.Nothing;
-    }) (api.list_files (options));
+    }) (list_files (options));
 };
 
 // given a Maybe {id:, name:} (parent folder), return a Future {folder:, files: [file-metadata]} (the children)
@@ -39,7 +39,7 @@ const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
     // Query for all files of type 'image/jpeg' with this id as a parent
     const query = `'${id}' in parents and mimeType = 'image/jpeg'`;
     const options = {params: {q: query}};
-    return S.map (res => ({folder: id, files: res.data.files})) (api.list_files (options));
+    return S.map (res => ({folder: id, files: res.data.files})) (list_files (options));
 });
 
 // given a file metadata object ({kind:, id:, name:, mimeType:}), return a Future of the extracted-text, id, hash, &
@@ -51,7 +51,7 @@ const getText = meta => Future.chain (res => {
         hash: imageHash (text),
         text
     })) (extractText (Buffer.from (res.data)));
-}) (api.get_file ({
+}) (get_file ({
     responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
     params: {
         alt: 'media'
@@ -102,10 +102,11 @@ const run = S.pipe ([
         folder: data.folder,
         files: data.files
     })) (writeFile (Buffer.from (JSON.stringify (data.json))) ('../data/receipts.json'))),
-    S.chain (data => S.chain (to => S.traverse (Future) (file => api.move_file (data.folder) (S.maybeToNullable (to).id) (file)) (data.files)) (processedReceiptsFolderId))
+    S.chain (data => S.chain (to => S.traverse (Future) (file => move_file (data.folder) (S.maybeToNullable (to).id) (file)) (data.files)) (processedReceiptsFolderId))
 ]) (receiptsFolderId);
 ///////////
 
+// todo Return something more useful
 Future.fork (console.error, console.log) (run);
 
 

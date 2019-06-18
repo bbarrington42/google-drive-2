@@ -89,7 +89,5 @@ const get_ids = names => S.map (res => {
 module.exports = {
     list_files,
     get_file,
-    delete_file,
-    move_file,
-    get_ids
+    move_file
 };
