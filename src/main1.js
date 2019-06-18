@@ -74,23 +74,24 @@ const updateJson = json => receipts => {
 
 ///////////////////
 // Steps
-// 1    Get the ids of the folders: 'Receipts' & 'Processed Receipts'
+// 1    Get the ids of the folders 'Receipts' & 'Processed Receipts'
 // 2    Get the metadata of the files in the folder 'Receipts'
 // 3    Retrieve the file media and extract text in parallel
 // 4    Update and save the JSON containing the image metadata and extracted text
 // 5    Move the images from 'Receipts' to 'Processed Receipts'
 
-// Main functions
 
-
-/////////////////
+const receiptsFolderId = getFolderId ('Receipts');
+const processedReceiptsFolderId = getFolderId ('Processed Receipts');
 
 // Pipeline
 const run = S.pipe ([
     S.chain (getMetaData),
-    S.chain (arr => Future.parallel (2) (S.map (getText) (arr))),
-    S.map (updateJson ({}))
-]) (getFolderId ('Receipts'));
+    // todo parallel is exceeding throughput. Consider using traverse.
+    S.chain (arr => Future.parallel (1) (S.map (getText) (arr))),
+    S.chain (receipts => S.map (json => updateJson (JSON.parse (json)) (receipts)) (readFile ('../data/receipts.json'))),
+    S.chain (json => writeFile (Buffer.from (JSON.stringify (json))) ('../data/receipts.json'))
+]) (receiptsFolderId);
 ///////////
 
 Future.fork (console.error, console.log) (run);

@@ -17,8 +17,9 @@ const writeFile = buffer => path => Future((reject, resolve) => {
     fs.writeFile(path, buffer, err => err ? reject(`writeFile: ${err}`) : resolve(path));
 });
 
-const readFile = encoding => path => Future((reject, resolve) => {
-   fs.readFile(path, encoding, (err, data) => err ? reject(`readFile: ${err}`) : resolve(data));
+// todo Consider requiring encoding
+const readFile = path => Future((reject, resolve) => {
+   fs.readFile(path, 'utf8', (err, data) => err ? reject(`readFile: ${err}`) : resolve(data));
 });
 
 // Accepts an array of text and returns a computed hash

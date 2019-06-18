@@ -65,7 +65,7 @@ const update_receipts = receipts => json => {
 // create the file if it doesn't exist.
 const json =
     S.map (JSON.parse) (Future.fold (() => '{}') (a => a)
-    (readFile ('utf8') ('../data/receipts.json')));
+    (readFile('../data/receipts.json')));
 
 const folderIds = api.get_ids (['Receipts', 'Processed Receipts']);
 
