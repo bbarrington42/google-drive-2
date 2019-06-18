@@ -1,10 +1,3 @@
-// Steps
-// 1    Get the ids of the folders: 'Receipts' & 'Processed Receipts'
-// 2    Get the metadata of the files in the folder 'Receipts'
-// 3    Retrieve the file media and extract text in parallel
-// 4    Update and save the JSON containing the image metadata and extracted text
-// 5    Move the images from 'Receipts' to 'Processed Receipts'
-
 'use strict';
 
 // dependencies
@@ -18,7 +11,6 @@ const S = create ({
 });
 
 const Future = require ('fluture');
-const crypto = require ('crypto');
 
 const api = require ('./api');
 const {imageHash, writeFile, readFile, inspect} = require ('./misc');
@@ -42,7 +34,7 @@ const getFolderId = name => {
     }) (api.list_files (options));
 };
 
-// given a Maybe {id:, name:} (parent folder), return a Future [file-resource] (the children)
+// given a Maybe {id:, name:} (parent folder), return a Future [file-metadata] (the children)
 const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
     // Query for all files of type 'image/jpeg' with this id as a parent
     const query = `'${id}' in parents and mimeType = 'image/jpeg'`;
@@ -68,20 +60,39 @@ const getText = meta => {
     }) (meta.id));
 };
 
+// given an array of new receipts (each object has id, hash, name, & text array) and the existing json, return the
+// updated json [receipt...] -> json -> json
+const updateJson = json => receipts => {
+    const update_receipt = json => receipt => {
+        json[receipt.hash] = {id: receipt.id, name: receipt.name, text: receipt.text};
+        return json;
+    };
+
+    return S.reduce (update_receipt) (json) (receipts);
+};
+
 
 ///////////////////
+// Steps
+// 1    Get the ids of the folders: 'Receipts' & 'Processed Receipts'
+// 2    Get the metadata of the files in the folder 'Receipts'
+// 3    Retrieve the file media and extract text in parallel
+// 4    Update and save the JSON containing the image metadata and extracted text
+// 5    Move the images from 'Receipts' to 'Processed Receipts'
 
 // Main functions
+
+
 /////////////////
 
 // Pipeline
+const run = S.pipe ([
+    S.chain (getMetaData),
+    S.chain (arr => Future.parallel (2) (S.map (getText) (arr))),
+    S.map (updateJson ({}))
+]) (getFolderId ('Receipts'));
 ///////////
 
-// Testing
-const folderId = getFolderId ('Receipts');
-const meta = S.chain (getMetaData) (folderId);
-const buffers = S.chain (arr => Future.parallel (1) (S.map (getText) (arr))) (meta);
-Future.fork (console.error, console.log) (buffers);
-//////////
+Future.fork (console.error, console.log) (run);
 
 
