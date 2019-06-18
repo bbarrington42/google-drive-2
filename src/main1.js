@@ -83,7 +83,6 @@ const updateJson = json => receipts => {
 const receiptsFolderId = getFolderId ('Receipts');
 const processedReceiptsFolderId = getFolderId ('Processed Receipts');
 
-const fileIdsFromJson = json => S.map (key => json[key].id) (Object.keys (json));
 
 
 // Pipeline
@@ -96,12 +95,12 @@ const run = S.pipe ([
     })) (Future.parallel (1) (S.map (getText) (meta.files)))),
     S.chain (data => S.map (json => ({
         folder: data.folder,
-        json: updateJson (JSON.parse (json)) (data.receipts)
+        json: updateJson (JSON.parse (json)) (data.receipts),
+        files: S.map(({id}) => id)(data.receipts)
     })) (readFile ('../data/receipts.json'))),
     S.chain (data => Future.map (() => ({
         folder: data.folder,
-        // todo Bug! This won't work. Need only the file ids that were just discovered!
-        files: fileIdsFromJson (data.json)
+        files: data.files
     })) (writeFile (Buffer.from (JSON.stringify (data.json))) ('../data/receipts.json'))),
     S.chain (data => S.chain (to => S.traverse (Future) (file => api.move_file (data.folder) (S.maybeToNullable (to).id) (file)) (data.files)) (processedReceiptsFolderId))
 ]) (receiptsFolderId);
