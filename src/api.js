@@ -19,8 +19,6 @@ const about = client.buildRequest ({
 }) ('/about');
 
 
-const list_drives = client.buildRequest ({}) ('/drives');
-
 
 const list_files = (options = {}) => {
 
@@ -72,18 +70,6 @@ const move_file = fromParentId => toParentId => fileId => client.buildRequest ({
     }
 }) (`/files/${fileId}`);
 
-
-// Get the ids of the named resources
-// Return an object, but if the id does not exist, the value will be null
-const get_ids = names => S.map (res => {
-    const pairs = S.map (name => {
-        const maybeFile = S.find (file => file.name === name) (res.data.files);
-        return S.maybe (JSON.parse (`{"${name}": null}`)) (file => JSON.parse (`{"${name}": "${file.id}"}`)) (maybeFile);
-    }) (names);
-
-    return S.reduce (acc => obj => ({...acc, ...obj})) ({}) (pairs);
-
-}) (list_files ());
 
 
 module.exports = {

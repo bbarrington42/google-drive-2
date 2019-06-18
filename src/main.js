@@ -83,20 +83,19 @@ const updateJson = json => receipts => {
 const receiptsFolderId = getFolderId ('Receipts');
 const processedReceiptsFolderId = getFolderId ('Processed Receipts');
 
-
+// todo Add file watch and create an event loop
 
 // Pipeline
 const run = S.pipe ([
     S.chain (getMetaData),
-    // todo parallel is exceeding throughput. Consider using traverse.
     S.chain (meta => Future.map (receipts => ({
         folder: meta.folder,
         receipts
-    })) (Future.parallel (1) (S.map (getText) (meta.files)))),
+    })) (S.traverse (Future) (getText) (meta.files))),
     S.chain (data => S.map (json => ({
         folder: data.folder,
         json: updateJson (JSON.parse (json)) (data.receipts),
-        files: S.map(({id}) => id)(data.receipts)
+        files: S.map (({id}) => id) (data.receipts)
     })) (readFile ('../data/receipts.json'))),
     S.chain (data => Future.map (() => ({
         folder: data.folder,
