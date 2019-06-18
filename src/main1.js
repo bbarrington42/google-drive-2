@@ -34,12 +34,12 @@ const getFolderId = name => {
     }) (api.list_files (options));
 };
 
-// given a Maybe {id:, name:} (parent folder), return a Future [file-metadata] (the children)
+// given a Maybe {id:, name:} (parent folder), return a Future {folder:, files: [file-metadata]} (the children)
 const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
     // Query for all files of type 'image/jpeg' with this id as a parent
     const query = `'${id}' in parents and mimeType = 'image/jpeg'`;
     const options = {params: {q: query}};
-    return S.map (res => res.data.files) (api.list_files (options));
+    return S.map (res => ({folder: id, files: res.data.files})) (api.list_files (options));
 });
 
 // given a file metadata object ({kind:, id:, name:, mimeType:}), return a Future of the extracted-text, id, hash, &
@@ -67,7 +67,7 @@ const updateJson = json => receipts => {
         return json;
     };
 
-    return S.reduce (update_receipt) (json) (receipts);
+   return S.reduce (update_receipt) (json) (receipts);
 };
 
 
@@ -83,13 +83,25 @@ const updateJson = json => receipts => {
 const receiptsFolderId = getFolderId ('Receipts');
 const processedReceiptsFolderId = getFolderId ('Processed Receipts');
 
+const fileIdsFromJson = json => S.map (key => json[key].id) (Object.keys (json));
+
+
 // Pipeline
 const run = S.pipe ([
     S.chain (getMetaData),
     // todo parallel is exceeding throughput. Consider using traverse.
-    S.chain (arr => Future.parallel (1) (S.map (getText) (arr))),
-    S.chain (receipts => S.map (json => updateJson (JSON.parse (json)) (receipts)) (readFile ('../data/receipts.json'))),
-    S.chain (json => writeFile (Buffer.from (JSON.stringify (json))) ('../data/receipts.json'))
+    S.chain (meta => Future.map (receipts => ({
+        folder: meta.folder,
+        receipts
+    })) (Future.parallel (1) (S.map (getText) (meta.files)))),
+    S.chain (data => S.map (json => ({
+        folder: data.folder,
+        json: updateJson (JSON.parse (json)) (data.receipts)
+    })) (readFile ('../data/receipts.json'))),
+    S.chain (data => Future.map (() => ({
+        folder: data.folder,
+        files: fileIdsFromJson (data.json)
+    })) (writeFile (Buffer.from (JSON.stringify (data.json))) ('../data/receipts.json')))
 ]) (receiptsFolderId);
 ///////////
 
