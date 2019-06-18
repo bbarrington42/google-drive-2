@@ -100,12 +100,10 @@ const run = S.pipe ([
     })) (readFile ('../data/receipts.json'))),
     S.chain (data => Future.map (() => ({
         folder: data.folder,
+        // todo Bug! This won't work. Need only the file ids that were just discovered!
         files: fileIdsFromJson (data.json)
     })) (writeFile (Buffer.from (JSON.stringify (data.json))) ('../data/receipts.json'))),
-    S.chain (data => S.chain (to => S.traverse (Future) (file => {
-        console.log(`file: ${file}, from: ${data.folder}, to: ${S.maybeToNullable(to).id}`);
-        return api.move_file (data.folder) (S.maybeToNullable(to).id) (file)
-    }) (data.files)) (processedReceiptsFolderId))
+    S.chain (data => S.chain (to => S.traverse (Future) (file => api.move_file (data.folder) (S.maybeToNullable (to).id) (file)) (data.files)) (processedReceiptsFolderId))
 ]) (receiptsFolderId);
 ///////////
 
