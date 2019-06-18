@@ -70,6 +70,9 @@ const updateJson = json => receipts => {
     return S.reduce (update_receipt) (json) (receipts);
 };
 
+const moveFiles = source => to =>
+    S.traverse (Future) (file => move_file (source.folder) (S.maybeToNullable (to).id) (file)) (source.files);
+
 
 ///////////////////
 // Steps
@@ -101,7 +104,7 @@ const run = S.pipe ([
         folder: data.folder,
         files: data.files
     })) (writeFile (Buffer.from (JSON.stringify (data.json))) ('../data/receipts.json'))),
-    S.chain (data => S.chain (to => S.traverse (Future) (file => move_file (data.folder) (S.maybeToNullable (to).id) (file)) (data.files)) (processedReceiptsFolderId))
+    S.chain (data => S.chain (moveFiles (data)) (processedReceiptsFolderId))
 ]) (receiptsFolderId);
 ///////////
 
