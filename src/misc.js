@@ -9,6 +9,7 @@ const S = create ({
     env: env.concat (flutureEnv)
 });
 
+const crypto = require ('crypto');
 const Future = require ('fluture');
 const fs = require('fs');
 
@@ -20,6 +21,14 @@ const readFile = encoding => path => Future((reject, resolve) => {
    fs.readFile(path, encoding, (err, data) => err ? reject(`readFile: ${err}`) : resolve(data));
 });
 
+// Accepts an array of text and returns a computed hash
+// [text] -> hex
+const imageHash = textArray => {
+    const hash = crypto.createHash ('sha256');
+    textArray.forEach (text => hash.update (text));
+    return hash.digest ('hex');
+};
+
 const inspect = (f = a => a) => S.map(a => {
     f(a);
     return a;
@@ -28,5 +37,6 @@ const inspect = (f = a => a) => S.map(a => {
 module.exports = {
     writeFile,
     readFile,
-    inspect
+    inspect,
+    imageHash
 };

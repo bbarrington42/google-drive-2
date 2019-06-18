@@ -21,7 +21,7 @@ const Future = require ('fluture');
 const crypto = require ('crypto');
 
 const api = require ('./api');
-const {writeFile, readFile, inspect} = require ('./misc');
+const {imageHash, writeFile, readFile, inspect} = require ('./misc');
 
 const {extractText} = require ('../lib/extract');
 
@@ -38,11 +38,11 @@ const getFolderId = name => {
         return files.length === 1 ? S.map (file => ({
             id: file.id,
             name: file.name
-        })) (S.head (files)) : S.Nothing
+        })) (S.head (files)) : S.Nothing;
     }) (api.list_files (options));
 };
 
-// given a Maybe {id:, name:} (parent folder), return a Future [file-resource] (children)
+// given a Maybe {id:, name:} (parent folder), return a Future [file-resource] (the children)
 const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
     // Query for all files of type 'image/jpeg' with this id as a parent
     const query = `'${id}' in parents and mimeType = 'image/jpeg'`;
@@ -50,14 +50,22 @@ const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
     return S.map (res => res.data.files) (api.list_files (options));
 });
 
-// given a file metadata object ({kind:, id:, name:, mimeType:}), return a Future of the extracted-text
+// given a file metadata object ({kind:, id:, name:, mimeType:}), return a Future of the extracted-text, id, hash, &
+// name (as an Object)
 const getText = meta => {
-    return Future.chain (res => extractText(Buffer.from(res.data))) (api.get_file ({
+    return Future.chain (res => {
+        return Future.map (text => ({
+            id: meta.id,
+            name: meta.name,
+            hash: imageHash (text),
+            text
+        })) (extractText (Buffer.from (res.data)));
+    }) (api.get_file ({
         responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
         params: {
             alt: 'media'
         }
-    }) (meta.id))
+    }) (meta.id));
 };
 
 
@@ -72,7 +80,7 @@ const getText = meta => {
 // Testing
 const folderId = getFolderId ('Receipts');
 const meta = S.chain (getMetaData) (folderId);
-const buffers = S.chain(arr => Future.parallel(1) (S.map(getText) (arr))) (meta);
+const buffers = S.chain (arr => Future.parallel (1) (S.map (getText) (arr))) (meta);
 Future.fork (console.error, console.log) (buffers);
 //////////
 

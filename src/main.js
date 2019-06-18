@@ -11,10 +11,9 @@ const S = create ({
 });
 
 const Future = require ('fluture');
-const crypto = require ('crypto');
 
 const api = require ('./api');
-const {writeFile, readFile, inspect} = require ('./misc');
+const {writeFile, readFile, inspect, imageHash} = require ('./misc');
 
 const {extractText} = require ('../lib/extract');
 
@@ -57,15 +56,6 @@ const update_receipts = receipts => json => {
     };
 
     return S.reduce (update_receipt) (json) (receipts);
-};
-
-
-// Accepts an array of text and returns a computed hash
-// [text] -> hex
-const imageHash = textArray => {
-    const hash = crypto.createHash ('sha256');
-    textArray.forEach (text => hash.update (text));
-    return hash.digest ('hex');
 };
 
 
