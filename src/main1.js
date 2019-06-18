@@ -44,21 +44,20 @@ const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
 
 // given a file metadata object ({kind:, id:, name:, mimeType:}), return a Future of the extracted-text, id, hash, &
 // name (as an Object)
-const getText = meta => {
-    return Future.chain (res => {
-        return Future.map (text => ({
-            id: meta.id,
-            name: meta.name,
-            hash: imageHash (text),
-            text
-        })) (extractText (Buffer.from (res.data)));
-    }) (api.get_file ({
-        responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
-        params: {
-            alt: 'media'
-        }
-    }) (meta.id));
-};
+const getText = meta => Future.chain (res => {
+    return Future.map (text => ({
+        id: meta.id,
+        name: meta.name,
+        hash: imageHash (text),
+        text
+    })) (extractText (Buffer.from (res.data)));
+}) (api.get_file ({
+    responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
+    params: {
+        alt: 'media'
+    }
+}) (meta.id));
+
 
 // given an array of new receipts (each object has id, hash, name, & text array) and the existing json, return the
 // updated json [receipt...] -> json -> json
