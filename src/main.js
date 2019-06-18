@@ -13,43 +13,55 @@ const S = create ({
 const Future = require ('fluture');
 
 const api = require ('./api');
-const {writeFile, readFile, inspect, imageHash} = require ('./misc');
+const {imageHash, writeFile, readFile, inspect} = require ('./misc');
 
 const {extractText} = require ('../lib/extract');
 
 
-/// helper functions ///////////////////
+// Helper functions
 
-// Retrieve file contents as a Buffer.
-// In addition to the Buffer, the file name and the id are returned
-// file -> Future[{id, name, content}]
-const contents = file => S.map (res => ({id: file.id, name: file.name, content: Buffer.from (res.data)})) (api.get_file ({
-        responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
-        params: {
-            alt: 'media'
-        }
-    }) (file.id));
-
-
-// obj -> Future[{id, name, hash, text}]
-const extract_text = obj => S.map (text => ({
-    id: obj.id,
-    name: obj.name,
-    hash: imageHash (text),
-    text
-})) (extractText (obj.content));
-
-
-// helper to write each image to local storage and return file id, name, hash, and captured text
-// obj -> Future[obj]
-const process_file = obj => {
-    console.log(`process_file invoked, obj: ${obj.name}`);
-    const f = writeFile (obj.content) (`../data/${obj.name}`);
-    return S.chain (extract_text) (S.map (() => obj) (f));
+// given a folder name, returns a Future Maybe containing an object with the fields: id & name
+const getFolderId = name => {
+    const query = `name = '${name}' and mimeType = 'application/vnd.google-apps.folder'`;
+    const options = {params: {q: query}};
+    return S.map (res => {
+        const files = res.data.files;
+        // Success only if there is one resource
+        return files.length === 1 ? S.map (file => ({
+            id: file.id,
+            name: file.name
+        })) (S.head (files)) : S.Nothing;
+    }) (api.list_files (options));
 };
 
-// [receipt...] -> json -> json
-const update_receipts = receipts => json => {
+// given a Maybe {id:, name:} (parent folder), return a Future {folder:, files: [file-metadata]} (the children)
+const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
+    // Query for all files of type 'image/jpeg' with this id as a parent
+    const query = `'${id}' in parents and mimeType = 'image/jpeg'`;
+    const options = {params: {q: query}};
+    return S.map (res => ({folder: id, files: res.data.files})) (api.list_files (options));
+});
+
+// given a file metadata object ({kind:, id:, name:, mimeType:}), return a Future of the extracted-text, id, hash, &
+// name (as an Object)
+const getText = meta => Future.chain (res => {
+    return Future.map (text => ({
+        id: meta.id,
+        name: meta.name,
+        hash: imageHash (text),
+        text
+    })) (extractText (Buffer.from (res.data)));
+}) (api.get_file ({
+    responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
+    params: {
+        alt: 'media'
+    }
+}) (meta.id));
+
+
+// given an array of new receipts (each object has id, hash, name, & text array) and the existing json, return the
+// updated json [receipt...] -> json -> json
+const updateJson = json => receipts => {
     const update_receipt = json => receipt => {
         json[receipt.hash] = {id: receipt.id, name: receipt.name, text: receipt.text};
         return json;
@@ -59,80 +71,41 @@ const update_receipts = receipts => json => {
 };
 
 
-/// Top level functions follow //////////////////////
-
-// read in the receipts.json file.
-// create the file if it doesn't exist.
-const json =
-    S.map (JSON.parse) (Future.fold (() => '{}') (a => a)
-    (readFile('../data/receipts.json')));
-
-const folderIds = api.get_ids (['Receipts', 'Processed Receipts']);
-
-// Get the id of the named folder
-const folderId = name => S.map (obj => {
-    const folderId = obj[name];
-    return null === folderId ? S.Nothing : S.Just (folderId);
-}) (folderIds);
-
-const receiptsFolderId = folderId ('Receipts');
-
-// Retrieve all files of mimeType 'image/jpeg' underneath that folder
-const find_images = S.chain (maybeId => {
-    return S.maybe (Future.resolve ([])) (id => {
-        // Query for all files of type 'image/jpeg' with this id as a parent
-        const query = `'${id}' in parents and mimeType = 'image/jpeg'`;
-        const options = {params: {q: query}};
-        return S.map (res => res.data) (api.list_files (options));
-    }) (maybeId);
-});
+///////////////////
+// Steps
+// 1    Get the ids of the folders 'Receipts' & 'Processed Receipts'
+// 2    Get the metadata of the files in the folder 'Receipts'
+// 3    Retrieve the file media and extract text in parallel
+// 4    Update and save the JSON containing the image metadata and extracted text
+// 5    Move the images from 'Receipts' to 'Processed Receipts'
 
 
-// Download the image contents
-const download_contents = S.pipe ([
-    // get the array of files
-    S.map (filelist => filelist.files),
-    S.chain (files => Future.parallel (3) (S.map (contents) (files)))
-    // transform to array of objects containing the name, hash and content
-    //S.chain (S.traverse (Future) (contents))
-]);
+const receiptsFolderId = getFolderId ('Receipts');
+const processedReceiptsFolderId = getFolderId ('Processed Receipts');
 
 
-// this saves the image to local storage and returns the name, hash, and extracted text
-const process_files = S.chain (S.traverse (Future) (process_file));
 
-const update_json = S.chain (receipts => S.map (update_receipts (receipts)) (json));
-
-// return the JSON so we can extract the file ids in the next step
-const save_json = S.chain (json => S.map (() => json) (writeFile (Buffer.from (JSON.stringify (json))) ('../data/receipts.json')));
-
-
-// Extract the file ids from the saved json and move identified files into the folder 'Processed Receipts'
-const processedReceiptsFolderId = folderId ('Processed Receipts');
-
-// load up a function in a Future
-const move_image = S.chain (from => S.map (to => api.move_file (S.maybeToNullable (from)) (S.maybeToNullable (to))) (processedReceiptsFolderId)) (receiptsFolderId);
-
-
-const move_images = S.chain (obj => {
-    const ids = S.map (key => obj[key].id) (Object.keys (obj));
-    return S.traverse (Future) (id => S.chain (move => move (id)) (move_image)) (ids);
-});
-
-////////////////
+// Pipeline
 const run = S.pipe ([
-    find_images,
-    inspect (images => console.log (`images: ${JSON.stringify (images)}`)),
-    download_contents,
-    inspect (),
-    process_files,
-    inspect (a => console.log(`a: ${Object.keys(a)}`)),
-    update_json,
-    inspect (),
-    save_json,
-    inspect (),
-    //move_images
+    S.chain (getMetaData),
+    // todo parallel is exceeding throughput. Consider using traverse.
+    S.chain (meta => Future.map (receipts => ({
+        folder: meta.folder,
+        receipts
+    })) (Future.parallel (1) (S.map (getText) (meta.files)))),
+    S.chain (data => S.map (json => ({
+        folder: data.folder,
+        json: updateJson (JSON.parse (json)) (data.receipts),
+        files: S.map(({id}) => id)(data.receipts)
+    })) (readFile ('../data/receipts.json'))),
+    S.chain (data => Future.map (() => ({
+        folder: data.folder,
+        files: data.files
+    })) (writeFile (Buffer.from (JSON.stringify (data.json))) ('../data/receipts.json'))),
+    S.chain (data => S.chain (to => S.traverse (Future) (file => api.move_file (data.folder) (S.maybeToNullable (to).id) (file)) (data.files)) (processedReceiptsFolderId))
 ]) (receiptsFolderId);
+///////////
+
+Future.fork (console.error, console.log) (run);
 
 
-run.fork (console.error, res => console.log (JSON.stringify (res)));

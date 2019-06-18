@@ -9,8 +9,6 @@ const S = create ({
     env: env.concat (flutureEnv)
 });
 
-const Future = require ('fluture');
-
 const client = require ('./drive-client');
 
 
