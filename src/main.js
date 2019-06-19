@@ -82,6 +82,8 @@ const moveFiles = source => to =>
 // 4    Update and save the JSON containing the image metadata and extracted text
 // 5    Move the images from 'Receipts' to 'Processed Receipts'
 
+// Path for local json file containing captured text
+const capturedText = '../data/receipts.json';
 
 const receiptsFolderId = getFolderId ('Receipts');
 const processedReceiptsFolderId = getFolderId ('Processed Receipts');
@@ -99,16 +101,15 @@ const run = S.pipe ([
         folder: data.folder,
         json: updateJson (JSON.parse (json)) (data.receipts),
         files: S.map (({id}) => id) (data.receipts)
-    })) (readFile ('../data/receipts.json'))),
+    })) (readFile (capturedText))),
     S.chain (data => Future.map (() => ({
         folder: data.folder,
         files: data.files
-    })) (writeFile (Buffer.from (JSON.stringify (data.json))) ('../data/receipts.json'))),
+    })) (writeFile (Buffer.from (JSON.stringify (data.json))) (capturedText))),
     S.chain (data => S.chain (moveFiles (data)) (processedReceiptsFolderId))
 ]) (receiptsFolderId);
 ///////////
 
-// todo Return something more useful
-Future.fork (console.error, console.log) (run);
+Future.fork (console.error, () => console.log('Success')) (run);
 
 
