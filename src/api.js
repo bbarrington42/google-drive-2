@@ -16,7 +16,7 @@ const about = client.buildRequest ({
     params: {
         fields: '*'
     }
-}) ('/about');
+}) ('/drive/v3/about');
 
 
 const list_files = (options = {}) => {
@@ -30,7 +30,7 @@ const list_files = (options = {}) => {
                 const g = client.buildRequest ({
                     pageToken: fres.nextPageToken,
                     ...options
-                }) ('/files');
+                }) ('/drive/v3/files');
                 return S.map (gres => {
                     gres.files = S.concat (fres.files) (gres.files);
                     return gres;
@@ -39,16 +39,16 @@ const list_files = (options = {}) => {
         }) (f);
     };
 
-    return loop (client.buildRequest (options) ('/files'));
+    return loop (client.buildRequest (options) ('/drive/v3/files'));
 };
 
 
-const get_file = options => fileId => client.buildRequest (options) (`/files/${fileId}`);
+const get_file = options => fileId => client.buildRequest (options) (`/drive/v3/files/${fileId}`);
 
 
 const delete_file = fileId => client.buildRequest ({
     method: 'DELETE'
-}) (`files/${fileId}`);
+}) (`/drive/v3/files/${fileId}`);
 
 /*
  // This works.
@@ -67,12 +67,13 @@ const move_file = fromParentId => toParentId => fileId => client.buildRequest ({
         removeParents: fromParentId,
         addParents: toParentId
     }
-}) (`/files/${fileId}`);
+}) (`/drive/v3/files/${fileId}`);
+
 
 // This creates only the metadata for a new file
 // Required properties:
 // id, mimeType, name, parent folder id
-const create_file = folderId => mimeType => name =>
+const create_metadata = folderId => mimeType => name =>
     // If for some reason an ID can't be created, then this fails
     Future.chain (maybeId => {
         const rv = S.map (id => {
@@ -86,17 +87,38 @@ const create_file = folderId => mimeType => name =>
                     parents: [folderId]
                 }
             };
-            return client.buildRequest (options) ('/files');
+            return client.buildRequest (options) ('/drive/v3/files');
         }) (maybeId);
         return S.fromMaybe (Future.resolve (Error (`Could not generate ID for ${name}: ${mimeType}`))) (rv);
-    }) (Future.map (res => S.head (res.data.ids)) (ids_file));
+    }) (Future.map (res => S.head (res.data.ids)) (ids_for_file));
+
+// Returns a Future of an array of (possibly empty) file IDs
+const find_file = mimeType => folderId => name => {
+    const query = `name = '${name}' and '${folderId}' in parents and mimeType = '${mimeType}'`;
+    const options = {params: {q: query}};
+    return S.map (res => S.map (file => file.id) (res.data.files)) (list_files (options));
+};
 
 
-const ids_file = client.buildRequest ({
+//POST /upload/drive/v3/files
+const upload_contents = fileId => mimeType => data => {
+    const options = {
+        method: 'POST',
+        params: {
+            fileId,
+            uploadType: 'media'
+        },
+        data
+    };
+    return client.buildRequest(options) (`/upload/drive/v3/files`);
+};
+
+
+const ids_for_file = client.buildRequest ({
     params: {
         space: 'drive'
     }
-}) ('/files/generateIds');
+}) ('/drive/v3/files/generateIds');
 
 
 module.exports = {
@@ -107,7 +129,12 @@ module.exports = {
 
 
 // Testing
-// 1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb
+// 1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb ('Receipts')
+// 1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36  (test.json)
 const Future = require ('fluture');
 //Future.fork (console.error, res => console.log(res.data.files)) (list_files());
-Future.fork (console.error, console.log) (create_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json'));
+//Future.fork (console.error, console.log) (create_metadata ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')
+// ('test.json'));
+//Future.fork (console.error, console.log) (find_file ('application/json') ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('test.json'));
+
+Future.fork (console.error, console.log) (upload_contents('1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36') ('application/json') ('{}'));

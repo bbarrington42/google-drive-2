@@ -20,7 +20,7 @@ const client = new google.auth.JWT ({
 });
 
 const baseRequestOptions = {
-    baseUrl: 'https://www.googleapis.com/drive/v3'
+    baseUrl: 'https://www.googleapis.com'
 };
 
 // todo Document structure of options parameter

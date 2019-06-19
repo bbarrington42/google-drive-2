@@ -21,7 +21,7 @@ const {extractText} = require ('./lib/extract');
 // Helper functions
 
 // given a folder name, returns a Future Maybe containing an object with the fields: id & name
-const getFolderId = name => {
+const getFolder = name => {
     const query = `name = '${name}' and mimeType = 'application/vnd.google-apps.folder'`;
     const options = {params: {q: query}};
     return S.map (res => {
@@ -85,8 +85,8 @@ const moveFiles = source => to =>
 // Path for local json file containing captured text
 const capturedText = '/home/bill/receipts/receipts.json';
 
-const receiptsFolderId = getFolderId ('Receipts');
-const processedReceiptsFolderId = getFolderId ('Processed Receipts');
+const receiptsFolderId = getFolder ('Receipts');
+const processedReceiptsFolderId = getFolder ('Processed Receipts');
 
 // todo Relocate master json file to google drive
 
