@@ -12,10 +12,10 @@ const S = create ({
 
 const Future = require ('fluture');
 
-const {list_files, get_file, move_file} = require ('./api');
-const {imageHash, writeFile, readFile, inspect} = require ('./misc');
+const {list_files, get_file, move_file} = require ('./src/api');
+const {imageHash, writeFile, readFile, inspect} = require ('./src/misc');
 
-const {extractText} = require ('../lib/extract');
+const {extractText} = require ('./lib/extract');
 
 
 // Helper functions
@@ -83,12 +83,12 @@ const moveFiles = source => to =>
 // 5    Move the images from 'Receipts' to 'Processed Receipts'
 
 // Path for local json file containing captured text
-const capturedText = '../data/receipts.json';
+const capturedText = '/home/bill/receipts/receipts.json';
 
 const receiptsFolderId = getFolderId ('Receipts');
 const processedReceiptsFolderId = getFolderId ('Processed Receipts');
 
-// todo Add file watch and create an event loop
+// todo Relocate master json file to google drive
 
 // Pipeline
 const run = S.pipe ([
