@@ -26,6 +26,7 @@ const readFile = path => Future((reject, resolve) => {
 // [text] -> hex
 const imageHash = textArray => {
     const hash = crypto.createHash ('sha256');
+    // Normalize by sorting
     S.sort(textArray).forEach (text => hash.update (text));
     return hash.digest ('hex');
 };
