@@ -69,27 +69,28 @@ const move_file = fromParentId => toParentId => fileId => client.buildRequest ({
     }
 }) (`/files/${fileId}`);
 
-// This creates the metadata for a new file
+// This creates only the metadata for a new file
 // Required properties:
 // id, mimeType, name, parent folder id
-const create_file = folderId => mimeType => name => {
+const create_file = folderId => mimeType => name =>
     // If for some reason an ID can't be created, then this fails
-    return Future.chain(maybeId => {
-        const rv = S.map(id => {
+    Future.chain (maybeId => {
+        const rv = S.map (id => {
             const options = {
                 method: 'POST',
                 kind: 'drive#file',
-                id,
-                name,
-                mimeType,
-                parents: [folderId]
+                data: {
+                    id,
+                    name,
+                    mimeType,
+                    parents: [folderId]
+                }
             };
-            return client.buildRequest(options) ('/files');
+            return client.buildRequest (options) ('/files');
         }) (maybeId);
-        return S.fromMaybe(Future.resolve(Error)) (rv);
-    })(Future.map(res => S.head(res.data.ids))(ids_file));
+        return S.fromMaybe (Future.resolve (Error (`Could not generate ID for ${name}: ${mimeType}`))) (rv);
+    }) (Future.map (res => S.head (res.data.ids)) (ids_file));
 
-};
 
 const ids_file = client.buildRequest ({
     params: {
@@ -109,4 +110,4 @@ module.exports = {
 // 1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb
 const Future = require ('fluture');
 //Future.fork (console.error, res => console.log(res.data.files)) (list_files());
-Future.fork(console.error, console.log) (create_file('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json'));
+Future.fork (console.error, console.log) (create_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json'));
