@@ -78,7 +78,7 @@ const moveFiles = source => to =>
 // Steps
 // 1    Get the ids of the folders 'Receipts' & 'Processed Receipts'
 // 2    Get the metadata of the files in the folder 'Receipts'
-// 3    Retrieve the file media and extract text in parallel
+// 3    Retrieve the file media and extract text
 // 4    Update and save the JSON containing the image metadata and extracted text
 // 5    Move the images from 'Receipts' to 'Processed Receipts'
 
@@ -88,7 +88,6 @@ const capturedText = '/home/bill/receipts/receipts.json';
 const receiptsFolderId = getFolder ('Receipts');
 const processedReceiptsFolderId = getFolder ('Processed Receipts');
 
-// todo Relocate master json file to google drive
 
 // Pipeline
 const run = S.pipe ([

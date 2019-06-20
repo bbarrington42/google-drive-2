@@ -85,9 +85,11 @@ const create_metadata = folderId => mimeType => name => S.pipe ([
 
 
 // Returns a Future of an array of (possibly empty) file IDs
+// todo Fix this! mimeType doesn't work!
 const find_file = folderId => mimeType => name => {
-    const query = `name = '${name}' and '${folderId}' in parents and mimeType = '${mimeType}'`;
+    const query = `name = '${name}' and '${folderId}' in parents`;// and mimeType = '${mimeType}'`;
     const options = {params: {q: query}};
+    console.log(`options: ${JSON.stringify(options)}`);
     return S.map (res => S.map (file => file.id) (res.data.files)) (list_files (options));
 };
 
@@ -134,13 +136,14 @@ module.exports = {
 
 // Testing
 // 1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb ('Receipts')
-// 1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36  (test.json)
+// 1izTgDaT86YIRvNHz8Ut7g5vQUt8YNXlO  (test.json)
 const Future = require ('fluture');
 //Future.fork (console.error, res => console.log(res.data.files)) (list_files());
+// Future.fork (console.error, console.log)
+// (find_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')('test.json'));
+
 Future.fork (console.error, console.log)
 (update_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json') ('{"blart": "woof"}'));
-//Future.fork (console.error, console.log)
-// (find_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')('test.json'));
 
 
 //Future.fork (console.error, console.log) (upload_contents('1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36') ('{}'));
