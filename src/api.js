@@ -101,16 +101,24 @@ const find_file = mimeType => folderId => name => {
 
 
 //POST /upload/drive/v3/files
+/*
+ PUT /upload/drive/v2/files/{id}?uploadType=media HTTP/1.1
+ Host: www.googleapis.com
+ Authorization: Bearer <OAuth 2.0 access token here>
+ Content-Type: mime/type
+
+ <file content here>
+ */
 const upload_contents = fileId => mimeType => data => {
     const options = {
         method: 'POST',
+        //id: fileId,
         params: {
-            fileId,
             uploadType: 'media'
         },
-        data
+        data: Buffer.from(data)
     };
-    return client.buildRequest(options) (`/upload/drive/v3/files`);
+    return client.buildRequest(options) (`/upload/drive/v3/files/${fileId}`);
 };
 
 
@@ -135,6 +143,6 @@ const Future = require ('fluture');
 //Future.fork (console.error, res => console.log(res.data.files)) (list_files());
 //Future.fork (console.error, console.log) (create_metadata ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')
 // ('test.json'));
-//Future.fork (console.error, console.log) (find_file ('application/json') ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('test.json'));
+Future.fork (console.error, console.log) (find_file ('application/json') ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('test.json'));
 
-Future.fork (console.error, console.log) (upload_contents('1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36') ('application/json') ('{}'));
+Future.fork (console.error, console.log) (upload_contents('1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36') ('application/json') ('{blart}'));
