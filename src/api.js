@@ -50,17 +50,7 @@ const delete_file = fileId => client.buildRequest ({
     method: 'DELETE'
 }) (`/drive/v3/files/${fileId}`);
 
-/*
- // This works.
- curl --request PATCH \
- 'https://www.googleapis.com/drive/v3/files/17w6w07fbXbJ420q_n_mBMfWbzh5B1RU4?addParents=1KhTXPZIomvGXqGEDg4zi_YE4u0w5NRAO&removeParents=1cKhXCpKfoJqyA-l9AuNisLbNaM1svs1t&key=[YOUR_API_KEY]' \
- --header 'Authorization: Bearer [YOUR_ACCESS_TOKEN]' \
- --header 'Accept: application/json' \
- --header 'Content-Type: application/json' \
- --data '{}' \
- --compressed
 
- */
 const move_file = fromParentId => toParentId => fileId => client.buildRequest ({
     method: 'PATCH',
     params: {
@@ -92,6 +82,7 @@ const create_metadata = folderId => mimeType => name =>
         return S.fromMaybe (Future.resolve (Error (`Could not generate ID for ${name}: ${mimeType}`))) (rv);
     }) (Future.map (res => S.head (res.data.ids)) (ids_for_file));
 
+
 // Returns a Future of an array of (possibly empty) file IDs
 const find_file = mimeType => folderId => name => {
     const query = `name = '${name}' and '${folderId}' in parents and mimeType = '${mimeType}'`;
@@ -100,23 +91,13 @@ const find_file = mimeType => folderId => name => {
 };
 
 
-//POST /upload/drive/v3/files
-/*
- PUT /upload/drive/v2/files/{id}?uploadType=media HTTP/1.1
- Host: www.googleapis.com
- Authorization: Bearer <OAuth 2.0 access token here>
- Content-Type: mime/type
-
- <file content here>
- */
-const upload_contents = fileId => mimeType => data => {
+const upload_contents = fileId => data => {
     const options = {
-        method: 'POST',
-        //id: fileId,
+        method: 'PATCH',
         params: {
             uploadType: 'media'
         },
-        data: Buffer.from(data)
+        data
     };
     return client.buildRequest(options) (`/upload/drive/v3/files/${fileId}`);
 };
@@ -145,4 +126,4 @@ const Future = require ('fluture');
 // ('test.json'));
 Future.fork (console.error, console.log) (find_file ('application/json') ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('test.json'));
 
-Future.fork (console.error, console.log) (upload_contents('1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36') ('application/json') ('{blart}'));
+Future.fork (console.error, console.log) (upload_contents('1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36') ('{}'));
