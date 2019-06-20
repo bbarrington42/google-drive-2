@@ -80,7 +80,7 @@ const create_metadata = folderId => mimeType => name => S.pipe ([
             return client.buildRequest (options) ('/drive/v3/files');
         })
     ),
-    Future.map(S.map(res => res.data.id))
+    Future.map (S.map (res => res.data.id))
 ]) (ids_for_file);
 
 
@@ -103,18 +103,17 @@ const upload_contents = fileId => data => {
     return client.buildRequest (options) (`/upload/drive/v3/files/${fileId}`);
 };
 
-// returns a Future Maybe id
-const find_or_create_metadata2 = folderId => mimeType => name => {
-  // If more than one file is found, the first returned will be used
-  const maybeId = S.map(S.head)(find_file(folderId)(mimeType)(name));
-  return S.chain(S.maybe(create_metadata(folderId)(mimeType)(name))(() => maybeId)) (maybeId);
-};
 
 const find_or_create_metadata = folderId => mimeType => name => {
     // If more than one file is found, the first returned will be used
-    const maybeId = S.map(S.head)(find_file(folderId)(mimeType)(name));
-    return S.chain(id => S.isNothing(id) ? create_metadata(folderId)(mimeType)(name): maybeId) (maybeId);
+    const maybeId = S.map (S.head) (find_file (folderId) (mimeType) (name));
+    return S.chain (id => S.isNothing (id) ? create_metadata (folderId) (mimeType) (name) : maybeId) (maybeId);
 };
+
+const update_file = folderId => mimeType => name => data => S.pipe ([
+    S.chain (S.traverse (Future) (id => upload_contents (id) (data))),
+    S.map (S.map (res => res.data.id))
+]) (find_or_create_metadata (folderId) (mimeType) (name));
 
 
 const ids_for_file = client.buildRequest ({
@@ -127,7 +126,9 @@ const ids_for_file = client.buildRequest ({
 module.exports = {
     list_files,
     get_file,
-    move_file
+    move_file,
+    update_file,
+    upload_contents
 };
 
 
@@ -136,8 +137,10 @@ module.exports = {
 // 1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36  (test.json)
 const Future = require ('fluture');
 //Future.fork (console.error, res => console.log(res.data.files)) (list_files());
-Future.fork (console.error, console.log) (find_or_create_metadata ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json'));
-//Future.fork (console.error, console.log) (find_file ('application/json') ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')
-// ('test.json'));
+Future.fork (console.error, console.log)
+(update_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json') ('{"blart": "woof"}'));
+//Future.fork (console.error, console.log)
+// (find_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')('test.json'));
+
 
 //Future.fork (console.error, console.log) (upload_contents('1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36') ('{}'));
