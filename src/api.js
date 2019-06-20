@@ -103,11 +103,18 @@ const upload_contents = fileId => data => {
     return client.buildRequest (options) (`/upload/drive/v3/files/${fileId}`);
 };
 
-// const find_or_create_file = folderId => mimeType => name => data => {
-//   // If more than one file is found, the first returned will be used
-//   const maybeId = S.map(S.head)(find_file(folderId)(mimeType)(name));
-//   return S.chain(S.maybe(create_metadata(folderId)(mimeType)(name))(id => upload_contents(id)(data)))(maybeId);
-// };
+// returns a Future Maybe id
+const find_or_create_metadata2 = folderId => mimeType => name => {
+  // If more than one file is found, the first returned will be used
+  const maybeId = S.map(S.head)(find_file(folderId)(mimeType)(name));
+  return S.chain(S.maybe(create_metadata(folderId)(mimeType)(name))(() => maybeId)) (maybeId);
+};
+
+const find_or_create_metadata = folderId => mimeType => name => {
+    // If more than one file is found, the first returned will be used
+    const maybeId = S.map(S.head)(find_file(folderId)(mimeType)(name));
+    return S.chain(id => S.isNothing(id) ? create_metadata(folderId)(mimeType)(name): maybeId) (maybeId);
+};
 
 
 const ids_for_file = client.buildRequest ({
@@ -129,7 +136,7 @@ module.exports = {
 // 1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36  (test.json)
 const Future = require ('fluture');
 //Future.fork (console.error, res => console.log(res.data.files)) (list_files());
-Future.fork (console.error, console.log) (create_metadata ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json'));
+Future.fork (console.error, console.log) (find_or_create_metadata ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json'));
 //Future.fork (console.error, console.log) (find_file ('application/json') ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')
 // ('test.json'));
 
