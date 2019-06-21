@@ -138,6 +138,7 @@ module.exports = {
 // 1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb ('Receipts')
 // 1izTgDaT86YIRvNHz8Ut7g5vQUt8YNXlO  (test.json)
 const Future = require ('fluture');
+const {inspect} = require('./misc');
 //Future.fork (console.error, res => console.log(res.data.files)) (list_files());
 // Future.fork (console.error, console.log)
 // (find_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')('test.json'));
@@ -145,18 +146,18 @@ const Future = require ('fluture');
 const update =
     update_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json') ('{"blart": "woof"}');
 
-const contents = S.chain (maybeId => {
-    return S.traverse (Future) (id => {
-        return get_file ({
+
+const text = S.pipe ([
+    S.chain (S.traverse (Future) (
+        get_file ({
             responseType: 'json',
             params: {
                 alt: 'media'
             }
-        }) (id);
-    }) (maybeId);
-}) (update);
-
-const text = S.map(S.map(res => res.data)) (contents);
+        }))),
+    inspect(console.log),
+    S.map (S.map (res => res.data))
+]) (update);
 
 Future.fork (console.error, console.log) (text);
 
