@@ -13,14 +13,6 @@ const crypto = require ('crypto');
 const Future = require ('fluture');
 const fs = require('fs');
 
-const writeFile = buffer => path => Future((reject, resolve) => {
-    fs.writeFile(path, buffer, err => err ? reject(`writeFile: ${err}`) : resolve(path));
-});
-
-// todo Consider requiring encoding
-const readFile = path => Future((reject, resolve) => {
-   fs.readFile(path, 'utf8', (err, data) => err ? reject(`readFile: ${err}`) : resolve(data));
-});
 
 // Accepts an array of text and returns a computed hash
 // [text] -> hex
@@ -39,7 +31,5 @@ const inspect = (f = a => a) => S.map(a => {
 
 module.exports = {
     inspect,
-    imageHash,
-    readFile,
-    writeFile
+    imageHash
 };

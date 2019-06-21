@@ -12,8 +12,8 @@ const S = create ({
 
 const Future = require ('fluture');
 
-const {list_files, readBinary, readJson, move_file} = require ('./src/api');
-const {imageHash, writeFile, inspect} = require ('./src/misc');
+const {list_files, readBinary, readJson, update_file, move_file} = require ('./src/api');
+const {imageHash, inspect} = require ('./src/misc');
 
 const {extractText} = require ('./lib/extract');
 
@@ -77,8 +77,6 @@ const moveFiles = source => to =>
 // 4    Update and save the JSON containing the image metadata and extracted text
 // 5    Move the images from 'Receipts' to 'Processed Receipts'
 
-// Path for local json file containing captured text
-const capturedText = '/home/bill/receipts/receipts.json';
 
 const receiptsFolderId = getFolder ('Receipts');
 const processedReceiptsFolderId = getFolder ('Processed Receipts');
@@ -95,16 +93,14 @@ const run = S.pipe ([
         folder: data.folder,
         json: updateJson (json.value) (data.receipts),
         files: S.map (({id}) => id) (data.receipts)
-    })) (readJson(data.folder)('application/json')('master.json'))  ),
-    inspect(a => console.log(`after readJson: ${JSON.stringify(a)}`)),
+    })) (readJson (data.folder) ('application/json') ('master.json'))),
+    inspect (a => console.log (`after readJson: ${JSON.stringify (a)}`)),
     S.chain (data => Future.map (() => ({
         folder: data.folder,
         files: data.files
-        // todo Change this to use update_file
-    })) (writeFile (Buffer.from (JSON.stringify (data.json))) (capturedText))),
-    inspect(a => console.log(`after writeFile: ${JSON.stringify(a)}`)),
-    // todo Put this back in. 'update_file' has a different return value
-    //S.chain (data => S.chain (moveFiles (data)) (processedReceiptsFolderId))
+    })) (update_file (data.folder) ('application/json') ('master.json') (data.json))),
+    inspect (a => console.log (`after update_file: ${JSON.stringify (a)}`)),
+    S.chain (data => S.chain (moveFiles (data)) (processedReceiptsFolderId))
 ]) (receiptsFolderId);
 ///////////
 
