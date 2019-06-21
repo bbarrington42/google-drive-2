@@ -162,11 +162,8 @@ const {inspect} = require ('./misc');
 // Future.fork (console.error, console.log)
 // (find_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')('test.json'));
 
-const update =
-    update_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json') ('{"blart": "woof"}');
-
 
 //Future.fork (console.error, console.log) (text);
 
 
-//Future.fork(console.error, console.log) (readJson('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')('application/json')('receipts.json'));
+Future.fork(console.error, console.log) (readJson('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')('application/json')('master.json'));
