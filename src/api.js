@@ -89,12 +89,12 @@ const create_metadata = folderId => mimeType => name => S.pipe ([
 const find_file = folderId => mimeType => name => {
     const query = `name = '${name}' and '${folderId}' in parents`;// and mimeType = '${mimeType}'`;
     const options = {params: {q: query}};
-    console.log(`options: ${JSON.stringify(options)}`);
+    //console.log(`options: ${JSON.stringify(options)}`);
     return S.map (res => S.map (file => file.id) (res.data.files)) (list_files (options));
 };
 
 
-const upload_contents = fileId => data => {
+const upload_contents = data => fileId => {
     const options = {
         method: 'PATCH',
         params: {
@@ -113,7 +113,7 @@ const find_or_create_metadata = folderId => mimeType => name => {
 };
 
 const update_file = folderId => mimeType => name => data => S.pipe ([
-    S.chain (S.traverse (Future) (id => upload_contents (id) (data))),
+    S.chain(S.traverse(Future)(upload_contents (data))),
     S.map (S.map (res => res.data.id))
 ]) (find_or_create_metadata (folderId) (mimeType) (name));
 
