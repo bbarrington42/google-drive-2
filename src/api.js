@@ -45,6 +45,24 @@ const list_files = (options = {}) => {
 
 const get_file = options => fileId => client.buildRequest (options) (`/drive/v3/files/${fileId}`);
 
+const readBinary = fileId => get_file ({
+    responseType: 'arraybuffer',  // Important! for handling binary data
+    params: {
+        alt: 'media'
+    }
+}) (fileId);
+
+const readJson = folderId => mimeType => name => S.pipe ([
+    S.chain (S.traverse (Future) (
+        get_file ({
+            responseType: 'json',
+            params: {
+                alt: 'media'
+            }
+        }))),
+    S.map (S.map (res => res.data))
+]) (S.map(S.head)(find_file(folderId)(mimeType)(name)));
+
 
 const delete_file = fileId => client.buildRequest ({
     method: 'DELETE'
@@ -89,7 +107,6 @@ const create_metadata = folderId => mimeType => name => S.pipe ([
 const find_file = folderId => mimeType => name => {
     const query = `name = '${name}' and '${folderId}' in parents`;// and mimeType = '${mimeType}'`;
     const options = {params: {q: query}};
-    //console.log(`options: ${JSON.stringify(options)}`);
     return S.map (res => S.map (file => file.id) (res.data.files)) (list_files (options));
 };
 
@@ -117,7 +134,7 @@ const update_file = folderId => mimeType => name => data => S.pipe ([
     S.map (S.map (res => res.data.id))
 ]) (find_or_create_metadata (folderId) (mimeType) (name));
 
-
+// todo Reduce this to only retrieve one instead of the default 10
 const ids_for_file = client.buildRequest ({
     params: {
         space: 'drive'
@@ -127,7 +144,8 @@ const ids_for_file = client.buildRequest ({
 
 module.exports = {
     list_files,
-    get_file,
+    readJson,
+    readBinary,
     move_file,
     update_file,
     upload_contents
@@ -138,7 +156,7 @@ module.exports = {
 // 1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb ('Receipts')
 // 1izTgDaT86YIRvNHz8Ut7g5vQUt8YNXlO  (test.json)
 const Future = require ('fluture');
-const {inspect} = require('./misc');
+const {inspect} = require ('./misc');
 //Future.fork (console.error, res => console.log(res.data.files)) (list_files());
 // Future.fork (console.error, console.log)
 // (find_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')('test.json'));
@@ -147,19 +165,7 @@ const update =
     update_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json') ('{"blart": "woof"}');
 
 
-const text = S.pipe ([
-    S.chain (S.traverse (Future) (
-        get_file ({
-            responseType: 'json',
-            params: {
-                alt: 'media'
-            }
-        }))),
-    inspect(console.log),
-    S.map (S.map (res => res.data))
-]) (update);
-
-Future.fork (console.error, console.log) (text);
+//Future.fork (console.error, console.log) (text);
 
 
-//Future.fork (console.error, console.log) (upload_contents('1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36') ('{}'));
+Future.fork(console.error, console.log) (readJson('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')('application/json')('receipts.json'));

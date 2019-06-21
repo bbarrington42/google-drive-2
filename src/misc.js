@@ -31,6 +31,7 @@ const imageHash = textArray => {
     return hash.digest ('hex');
 };
 
+// For inspecting intermediate results in a pipeline
 const inspect = (f = a => a) => S.map(a => {
     f(a);
     return a;
