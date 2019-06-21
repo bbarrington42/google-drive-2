@@ -166,4 +166,4 @@ const {inspect} = require ('./misc');
 //Future.fork (console.error, console.log) (text);
 
 
-Future.fork(console.error, console.log) (readJson('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')('application/json')('master.json'));
+//Future.fork(console.error, console.log) (readJson('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')('application/json')('master.json'));
