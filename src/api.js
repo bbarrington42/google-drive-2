@@ -113,7 +113,7 @@ const find_or_create_metadata = folderId => mimeType => name => {
 };
 
 const update_file = folderId => mimeType => name => data => S.pipe ([
-    S.chain(S.traverse(Future)(upload_contents (data))),
+    S.chain (S.traverse (Future) (upload_contents (data))),
     S.map (S.map (res => res.data.id))
 ]) (find_or_create_metadata (folderId) (mimeType) (name));
 
@@ -142,8 +142,23 @@ const Future = require ('fluture');
 // Future.fork (console.error, console.log)
 // (find_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')('test.json'));
 
-Future.fork (console.error, console.log)
-(update_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json') ('{"blart": "woof"}'));
+const update =
+    update_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json') ('test.json') ('{"blart": "woof"}');
+
+const contents = S.chain (maybeId => {
+    return S.traverse (Future) (id => {
+        return get_file ({
+            responseType: 'json',
+            params: {
+                alt: 'media'
+            }
+        }) (id);
+    }) (maybeId);
+}) (update);
+
+const text = S.map(S.map(res => res.data)) (contents);
+
+Future.fork (console.error, console.log) (text);
 
 
 //Future.fork (console.error, console.log) (upload_contents('1E3CTgo_oIAGM2rFiP-6oki98X9qPpY36') ('{}'));
