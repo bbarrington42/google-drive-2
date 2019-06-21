@@ -89,20 +89,17 @@ const run = S.pipe ([
         folder: meta.folder,
         receipts
     })) (S.traverse (Future) (getText) (meta.files))),
-    S.chain (data => S.map (json => {
-        // todo Where does the .value come from??!!
-        console.log(`json: ${JSON.stringify(json)}`);
-        return ({
+    S.chain (data => S.map (json => ({
         folder: data.folder,
         json: updateJson (json.value) (data.receipts),
         files: S.map (({id}) => id) (data.receipts)
-    })}) (readJson (data.folder) ('application/json') ('master.json'))),
-    inspect (a => console.log (`after readJson: ${JSON.stringify (a)}`)),
+    })) (readJson (data.folder) ('application/json') ('master.json'))),
+    //inspect (a => console.log (`after readJson: ${JSON.stringify (a)}`)),
     S.chain (data => Future.map (() => ({
         folder: data.folder,
         files: data.files
     })) (update_file (data.folder) ('application/json') ('master.json') (data.json))),
-    inspect (a => console.log (`after update_file: ${JSON.stringify (a)}`)),
+    //inspect (a => console.log (`after update_file: ${JSON.stringify (a)}`)),
     S.chain (data => S.chain (moveFiles (data)) (processedReceiptsFolderId))
 ]) (receiptsFolderId);
 ///////////

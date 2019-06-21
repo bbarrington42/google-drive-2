@@ -11,6 +11,8 @@ const S = create ({
 
 const client = require ('./drive-client');
 
+const Future = require('fluture');
+
 
 const about = client.buildRequest ({
     params: {
@@ -153,17 +155,3 @@ module.exports = {
 };
 
 
-// Testing
-// 1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb ('Receipts')
-// 1izTgDaT86YIRvNHz8Ut7g5vQUt8YNXlO  (test.json)
-const Future = require ('fluture');
-const {inspect} = require ('./misc');
-//Future.fork (console.error, res => console.log(res.data.files)) (list_files());
-// Future.fork (console.error, console.log)
-// (find_file ('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/json')('test.json'));
-
-
-//Future.fork (console.error, console.log) (text);
-
-
-//Future.fork(console.error, console.log) (readJson('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')('application/json')('master.json'));
