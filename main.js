@@ -12,8 +12,8 @@ const S = create ({
 
 const Future = require ('fluture');
 
-const {list_files, get_file, move_file} = require ('./src/api');
-const {imageHash, writeFile, readFile, inspect} = require ('./src/misc');
+const {list_files, readBinary, readJson, move_file} = require ('./src/api');
+const {imageHash, writeFile, inspect} = require ('./src/misc');
 
 const {extractText} = require ('./lib/extract');
 
@@ -51,12 +51,7 @@ const getText = meta => Future.chain (res => {
         hash: imageHash (text),
         text
     })) (extractText (Buffer.from (res.data)));
-}) (get_file ({
-    responseType: 'arraybuffer',  // Important! This allows us to handle the binary data correctly
-    params: {
-        alt: 'media'
-    }
-}) (meta.id));
+}) (readBinary (meta.id));
 
 
 // given an array of new receipts (each object has id, hash, name, & text array) and the existing json, return the
@@ -98,17 +93,21 @@ const run = S.pipe ([
     })) (S.traverse (Future) (getText) (meta.files))),
     S.chain (data => S.map (json => ({
         folder: data.folder,
-        json: updateJson (JSON.parse (json)) (data.receipts),
+        json: updateJson (json.value) (data.receipts),
         files: S.map (({id}) => id) (data.receipts)
-    })) (readFile (capturedText))),
+    })) (readJson(data.folder)('application/json')('master.json'))  ),
+    inspect(a => console.log(`after readJson: ${JSON.stringify(a)}`)),
     S.chain (data => Future.map (() => ({
         folder: data.folder,
         files: data.files
+        // todo Change this to use update_file
     })) (writeFile (Buffer.from (JSON.stringify (data.json))) (capturedText))),
-    S.chain (data => S.chain (moveFiles (data)) (processedReceiptsFolderId))
+    inspect(a => console.log(`after writeFile: ${JSON.stringify(a)}`)),
+    // todo Put this back in. 'update_file' has a different return value
+    //S.chain (data => S.chain (moveFiles (data)) (processedReceiptsFolderId))
 ]) (receiptsFolderId);
 ///////////
 
-Future.fork (console.error, () => console.log('Success')) (run);
+Future.fork (console.error, () => console.log ('Success')) (run);
 
 

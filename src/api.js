@@ -134,9 +134,10 @@ const update_file = folderId => mimeType => name => data => S.pipe ([
     S.map (S.map (res => res.data.id))
 ]) (find_or_create_metadata (folderId) (mimeType) (name));
 
-// todo Reduce this to only retrieve one instead of the default 10
+
 const ids_for_file = client.buildRequest ({
     params: {
+        count: 1,
         space: 'drive'
     }
 }) ('/drive/v3/files/generateIds');
@@ -168,4 +169,4 @@ const update =
 //Future.fork (console.error, console.log) (text);
 
 
-Future.fork(console.error, console.log) (readJson('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')('application/json')('receipts.json'));
+//Future.fork(console.error, console.log) (readJson('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb')('application/json')('receipts.json'));

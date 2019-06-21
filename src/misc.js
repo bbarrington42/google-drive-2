@@ -38,8 +38,8 @@ const inspect = (f = a => a) => S.map(a => {
 });
 
 module.exports = {
-    writeFile,
-    readFile,
     inspect,
-    imageHash
+    imageHash,
+    readFile,
+    writeFile
 };
