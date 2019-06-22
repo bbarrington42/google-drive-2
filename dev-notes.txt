@@ -7,3 +7,7 @@
 7   Write the JSON file and the image to local storage. The document references the image.
 8   Remove the image from google drive.
 9   Enter event loop. An event will cause steps 1 - 8 to be executed.
+
+
+/////////////////////////
+Use 'pkg' to build executable, i.e.: pkg ./package.json --target host
