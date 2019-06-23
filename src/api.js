@@ -44,6 +44,20 @@ const list_files = (options = {}) => {
     return loop (client.buildRequest (options) ('/drive/v3/files'));
 };
 
+// given a folder name, returns a Future Maybe containing an object with the fields: id & name
+const getFolder = name => {
+    const query = `name = '${name}' and mimeType = 'application/vnd.google-apps.folder'`;
+    const options = {params: {q: query}};
+    return S.map (res => {
+        const files = res.data.files;
+        // Success only if there is one resource
+        return files.length === 1 ? S.map (file => ({
+            id: file.id,
+            name: file.name
+        })) (S.head (files)) : S.Nothing;
+    }) (list_files (options));
+};
+
 
 const get_file = options => fileId => client.buildRequest (options) (`/drive/v3/files/${fileId}`);
 
@@ -147,6 +161,7 @@ const ids_for_file = client.buildRequest ({
 
 module.exports = {
     list_files,
+    getFolder,
     readJson,
     readBinary,
     move_file,
