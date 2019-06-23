@@ -10,26 +10,17 @@ const S = create ({
 });
 
 const {readJson, getFolder} = require ('./api');
-const {inspect} = require('../lib/misc');
+const {summary} = require ('../lib/summary');
 
 const Future = require ('fluture');
 
 // Download contents of master.json and generate a summary report
 
-const getJson = future => {
-    return S.chain (folder => {
-        // console.log(`folder: ${JSON.stringify(folder)}`);
-        // const folderId = S.map(obj => obj.id)(S.fromMaybe({}) (folder.value));
-        // console.log(`folderId: ${JSON.stringify(folderId)}`);
-        return readJson(folder.value.id)('application/json')('master.json');
-    }) (future);
-};
+const getJson = S.chain (folder => readJson (folder.value.id) ('application/json') ('master.json'));
 
 
-const folder = getFolder('Receipts');
+const json = getJson (getFolder ('Receipts'));
 
-//Future.fork(console.error, console.log) (folder);
+const result = S.map (S.maybe ([]) (summary)) (json);
 
-const result = getJson (folder);
-
-Future.fork(console.error, console.log) (result);
+Future.fork (console.error, console.log) (result);
