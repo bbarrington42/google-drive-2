@@ -13,7 +13,7 @@ const S = create ({
 const Future = require ('fluture');
 
 const {list_files, readBinary, readJson, update_file, move_file} = require ('./src/api');
-const {imageHash, inspect} = require ('./src/misc');
+const {imageHash, inspect} = require ('./lib/misc');
 
 const {extractText} = require ('./lib/extract');
 
