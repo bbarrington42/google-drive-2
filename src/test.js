@@ -12,16 +12,14 @@ const S = create ({
 const Future = require ('fluture');
 
 
-const f1 = () => S.map (array =>
-    array.length === 1 ? S.map (() => 'Not empty') (S.head (array)) : S.Nothing)
-(Future.resolve (['some data']));
+const f1 = () => S.map (array => S.map (() => 'Not empty') (S.head (array))) (Future.resolve (['some data']));
 
 
 const f2 = S.chain (maybe => {
     // The output of this is: maybe?: {"value":"Not empty"}
     // Shouldn't it be: maybe?: Just ("Not empty") ?
     console.log (`maybe?: ${JSON.stringify (maybe)}`);
-    return Future.resolve ('dummy');
+    return Future.resolve (maybe.value); // How does this work?
 });
 
 const maybe = f1 ();
