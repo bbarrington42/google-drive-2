@@ -17,7 +17,7 @@ const Future = require ('fluture');
 // Download contents of master.json and generate a summary report
 
 const getJson = S.chain (folder =>
-    readJson (S.maybe ('') (f => f.id) (folder)) ('application/json') ('master.json'));
+    readJson (S.maybe ('') (S.prop('id')) (folder)) ('application/json') ('master.json'));
 
 
 const json = getJson (getFolder ('Receipts'));
