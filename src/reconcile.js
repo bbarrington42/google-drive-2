@@ -14,14 +14,13 @@ const {summary} = require ('../lib/summary');
 
 const Future = require ('fluture');
 
-// Download contents of master.json and generate a summary report
 
+// Download contents of master.json and generate a summary report
 const getJson = S.chain (folder =>
     readJson (S.maybe ('') (S.prop('id')) (folder)) ('application/json') ('master.json'));
 
-
 const json = getJson (getFolder ('Receipts'));
 
-const result = S.map (S.maybe ([]) (summary)) (json);
+const receiptsSummary = S.map (S.maybe ([]) (summary)) (json);
 
-Future.fork (console.error, console.log) (result);
+// todo Get the charges from the statement and reconcile with the receiptsSummary
