@@ -12,29 +12,24 @@ const S = create ({
 const Future = require ('fluture');
 
 
+const f1 = () => S.map (array =>
+    array.length === 1 ? S.map (() => 'Not empty') (S.head (array)) : S.Nothing)
+(Future.resolve (['some data']));
 
-// given a folder name, returns a Future Maybe containing an object with the fields: id & name
-const getFolder = () => {
-    return Future.map (res => {
-        const files = res.data.files;
-        // Success only if there is one resource
-        return files.length === 1 ? S.map (file => ({
-            id: file.id,
-            name: file.name
-        })) (S.head (files)) : S.Nothing;
-    }) (Future.resolve({data: {files: [{id: 'thisisanid', name: 'thisisaname'}]} }));
-};
 
-const getJson = S.chain (folder => {
-    console.log (`folder: ${JSON.stringify (folder)}`);
-    return Future.resolve('blart');
+const f2 = S.chain (maybe => {
+    // The output of this is: maybe?: {"value":"Not empty"}
+    // Shouldn't it be: maybe?: Just ("Not empty") ?
+    console.log (`maybe?: ${JSON.stringify (maybe)}`);
+    return Future.resolve ('dummy');
 });
 
-const folder = getFolder();
+const maybe = f1 ();
 
-Future.fork(console.error, console.log) (folder);
+// Output of this is: Just ("Not empty")
+Future.fork (console.error, console.log) (maybe);
 
-const result = getJson(folder);
 
+const result = f2 (maybe);
 
-Future.fork(console.error, console.log) (result);
+Future.fork (console.error, console.log) (result);
