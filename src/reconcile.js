@@ -11,6 +11,7 @@ const S = create ({
 
 const {readJson, getFolder} = require ('./api');
 const {summary} = require ('../lib/summary');
+const {runFuture} = require ('../lib/misc');
 
 const Future = require ('fluture');
 
