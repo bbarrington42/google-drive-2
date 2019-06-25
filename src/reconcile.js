@@ -11,6 +11,7 @@ const S = create ({
 
 const {readJson, getFolder} = require ('./api');
 const {summary} = require ('../lib/summary');
+const {getCharges} = require ('../lib/statement');
 const {runFuture} = require ('../lib/misc');
 
 const Future = require ('fluture');
@@ -22,8 +23,10 @@ const getJson = S.chain (folder =>
 
 const json = getJson (getFolder ('Receipts'));
 
-const receiptsSummary = S.map (S.maybe ([]) (summary)) (json);
-
-runFuture()(receiptsSummary);
+const receipts = S.map (S.maybe ([]) (summary)) (json);
 
 // todo Get the charges from the statement and reconcile with the receiptsSummary
+// todo For now just use this file...
+const charges = getCharges('../data/amex-statement-jun-17.csv');
+
+// todo Reconcile receipts against charges
