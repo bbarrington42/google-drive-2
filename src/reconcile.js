@@ -24,4 +24,6 @@ const json = getJson (getFolder ('Receipts'));
 
 const receiptsSummary = S.map (S.maybe ([]) (summary)) (json);
 
+runFuture()(receiptsSummary);
+
 // todo Get the charges from the statement and reconcile with the receiptsSummary
