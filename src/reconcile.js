@@ -16,17 +16,16 @@ const {runFuture} = require ('../lib/misc');
 
 const Future = require ('fluture');
 
-// Equality for a receipt and a statement entry
-// Both object types have the same fields (name, date, & amount)
-// However, the receipt values are string arrays whereas the statement values are single strings
-const isEqual = statement => receipt => {
-    const match = receipt => statement => S.any (S.equals (statement)) (receipt);
-    return match (receipt.amount) (statement.amount) ? (match (receipt.date) (statement.date) ?
-        S.any (str => statement.name.includes (str)) (receipt.name) : false) : false;
-};
 
-
-const unAccounted = receipts => statement => {
+const unAccountedFor = receipts => statement => {
+    // Equality for a receipt and a statement entry
+    // Both object types have the same fields (name, date, & amount)
+    // However, the receipt values are string arrays whereas the statement values are single strings
+    const isEqual = statement => receipt => {
+        const match = receipt => statement => S.any (S.equals (statement)) (receipt);
+        return match (receipt.amount) (statement.amount) ? (match (receipt.date) (statement.date) ?
+            S.any (str => statement.name.includes (str)) (receipt.name) : false) : false;
+    };
     const reconciled = entry => S.isJust (S.find (isEqual (entry)) (receipts));
     return S.reject (reconciled) (statement);
 };
@@ -67,4 +66,4 @@ const b = [
     }
 ];
 
-console.log (unAccounted (b) (a));
+console.log (unAccountedFor (b) (a));
