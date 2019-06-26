@@ -17,7 +17,7 @@ const {runFuture} = require ('../lib/misc');
 const Future = require ('fluture');
 
 
-const unAccountedFor = receipts => statement => {
+const unAccountedFor = statement => receipts => {
     // Equality for a receipt and a statement entry
     // Both object types have the same fields (name, date, & amount)
     // However, the receipt values are string arrays whereas the statement values are single strings
@@ -39,15 +39,11 @@ const json = getJson (getFolder ('Receipts'));
 
 const receipts = S.map (S.maybe ([]) (summary)) (json);
 
-//runFuture () (receipts);
-
-// todo Get the charges from the statement and reconcile with the receiptsSummary
+// Get the charges from the statement and reconcile with the receipts
 // todo For now just use this file...
 const charges = getCharges ('../data/amex-statement-jun-17.csv');
-//runFuture()(charges);
 
 // Reconciliation
-
-const result = S.chain(S.chain(unAccountedFor(receipts))) (charges);
+const result = S.chain(receipt => S.map(charge => unAccountedFor(charge) (receipt)) (charges)) (receipts);
 
 runFuture()(result);
