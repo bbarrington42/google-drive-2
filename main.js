@@ -12,27 +12,13 @@ const S = create ({
 
 const Future = require ('fluture');
 
-const {list_files, readBinary, readJson, update_file, move_file} = require ('./src/api');
-const {imageHash, inspect} = require ('./src/misc');
+const {list_files, getFolder, readBinary, readJson, update_file, move_file} = require ('./src/api');
+const {imageHash, inspect} = require ('./lib/misc');
 
 const {extractText} = require ('./lib/extract');
 
 
 // Helper functions
-
-// given a folder name, returns a Future Maybe containing an object with the fields: id & name
-const getFolder = name => {
-    const query = `name = '${name}' and mimeType = 'application/vnd.google-apps.folder'`;
-    const options = {params: {q: query}};
-    return S.map (res => {
-        const files = res.data.files;
-        // Success only if there is one resource
-        return files.length === 1 ? S.map (file => ({
-            id: file.id,
-            name: file.name
-        })) (S.head (files)) : S.Nothing;
-    }) (list_files (options));
-};
 
 // given a Maybe {id:, name:} (parent folder), return a Future {folder:, files: [file-metadata]} (the children)
 const getMetaData = S.maybe (Future.resolve ([])) (({id}) => {
@@ -67,7 +53,6 @@ const updateJson = json => receipts => {
 
 const moveFiles = source => to =>
     S.traverse (Future) (file => move_file (source.folder) (S.maybeToNullable (to).id) (file)) (source.files);
-
 
 ///////////////////
 // Steps
@@ -105,5 +90,6 @@ const run = S.pipe ([
 ///////////
 
 Future.fork (console.error, () => console.log ('Success')) (run);
+
 
 
