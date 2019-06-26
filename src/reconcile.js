@@ -47,23 +47,7 @@ const charges = getCharges ('../data/amex-statement-jun-17.csv');
 //runFuture()(charges);
 
 // Reconciliation
-// For each receipt, search for a match in the statements array
 
-// testing
-const a = [
-    {
-        name: 'blar',
-        date: '06/25/2019',
-        amount: '25.25'
-    }
-];
+const result = S.chain(S.chain(unAccountedFor(receipts))) (charges);
 
-const b = [
-    {
-        name: ['blart'],
-        date: ['06/25/2019'],
-        amount: ['25.25']
-    }
-];
-
-console.log (unAccountedFor (b) (a));
+runFuture()(result);
