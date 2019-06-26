@@ -15,6 +15,7 @@ const {getCharges} = require ('../lib/statement');
 const {runFuture} = require ('../lib/misc');
 
 const Future = require ('fluture');
+const EOL = require('os').EOL;
 
 
 const unAccountedFor = statement => receipts => {
@@ -30,6 +31,14 @@ const unAccountedFor = statement => receipts => {
     return S.reject (reconciled) (statement);
 };
 
+// Generate report from unaccounted for entries
+// todo Consider preserving original text from the statement
+// todo Also, pad line items so that columns are aligned
+const buildReport = entries => {
+  const buildLine = entry => S.joinWith(' '.repeat(4)) ([entry.name, entry.date, entry.amount]);
+  return S.joinWith(EOL)(S.map(buildLine) (entries));
+};
+
 
 // Download contents of master.json and generate a summary report
 const getJson = S.chain (folder =>
@@ -38,12 +47,15 @@ const getJson = S.chain (folder =>
 const json = getJson (getFolder ('Receipts'));
 
 const receipts = S.map (S.maybe ([]) (summary)) (json);
+//runFuture() (receipts);
 
 // Get the charges from the statement and reconcile with the receipts
 // todo For now just use this file...
 const charges = getCharges ('../data/amex-statement-jun-17.csv');
+//runFuture()(charges);
 
 // Reconciliation
-const result = S.chain(receipt => S.map(charge => unAccountedFor(charge) (receipt)) (charges)) (receipts);
+const unmatchedCharges = S.chain(receipt => S.map(charge => unAccountedFor(charge) (receipt)) (charges)) (receipts);
 
-runFuture()(result);
+const report = S.map(buildReport) (unmatchedCharges);
+runFuture() (report);
