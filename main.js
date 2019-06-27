@@ -13,7 +13,7 @@ const S = create ({
 const Future = require ('fluture');
 
 const {list_files, getFolder, readBinary, readJson, update_file, move_file} = require ('./src/api');
-const {imageHash, inspect} = require ('./lib/misc');
+const {imageHash, pause, inspect} = require ('./lib/misc');
 
 const {extractText} = require ('./lib/extract');
 
@@ -37,7 +37,7 @@ const getText = meta => Future.chain (res => {
         hash: imageHash (text),
         text
     })) (extractText (Buffer.from (res.data)));
-}) (readBinary (meta.id));
+}) (pause (2000) (readBinary (meta.id)));
 
 
 // given an array of new receipts (each object has id, hash, name, & text array) and the existing json, return the
