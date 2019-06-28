@@ -169,4 +169,10 @@ module.exports = {
     upload_contents
 };
 
+//////
+const {runFuture} = require('../lib/misc');
+//runFuture(res => console.log(JSON.stringify(res))) (list_files());
 
+//1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb
+// 'application/vnd.google-apps.folder'
+runFuture()(readJson('1iRprWI2mA8BvVU8cj3CRybkrmC0vvdQb') ('application/vnd.google-apps.folder') ('Receipts'));
