@@ -76,7 +76,8 @@ const run = S.pipe ([
     })) (S.traverse (Future) (getText) (meta.files))),
     S.chain (data => S.map (json => ({
         folder: data.folder,
-        json: updateJson (json.value) (data.receipts),
+        // Return an empty object if the file doesn't exist
+        json: updateJson (S.maybe ({}) (j => j) (json)) (data.receipts),
         files: S.map (({id}) => id) (data.receipts)
     })) (readJson (data.folder) ('application/json') ('master.json'))),
     //inspect (a => console.log (`after readJson: ${JSON.stringify (a)}`)),
