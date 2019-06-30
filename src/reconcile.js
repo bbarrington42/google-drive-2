@@ -12,7 +12,7 @@ const S = create ({
 const {readJson, getFolder} = require ('./api');
 const {summary} = require ('../lib/summary');
 const {getCharges} = require ('../lib/statement');
-const {runFuture} = require ('../lib/misc');
+const {runFuture, readFile} = require ('../lib/misc');
 
 const Future = require ('fluture');
 const EOL = require('os').EOL;
@@ -41,10 +41,15 @@ const buildReport = entries => {
 
 
 // Download contents of master.json and generate a summary report
-const getJson = S.chain (folder =>
-    readJson (S.maybe ('') (S.prop ('id')) (folder)) ('application/json') ('master.json'));
+// const getJson = S.chain (folder =>
+//     readJson (S.maybe ('') (S.prop ('id')) (folder)) ('application/json') ('master.json'));
+//
+// const json = getJson (getFolder ('Receipts'));
 
-const json = getJson (getFolder ('Receipts'));
+
+// todo Get locally just for testing
+const json = S.map(str => S.Just(JSON.parse(str)))(readFile('utf8') ('../data/master.json'));
+//runFuture()(json);
 
 const receipts = S.map (S.maybe ([]) (summary)) (json);
 //runFuture() (receipts);
