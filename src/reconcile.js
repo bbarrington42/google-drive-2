@@ -31,17 +31,22 @@ const unAccountedFor = statement => receipts => {
     return S.reject (reconciled) (statement);
 };
 
-// Generate report from unaccounted for entries
 // todo Consider preserving original text from the statement
-// todo Also, pad line items so that columns are aligned
+// Generate report from unaccounted for entries
+// Pad line items so that columns are aligned
 const buildReport = entries => {
     const toArray = entry => [entry.name, entry.date, entry.amount];
-    const arrays = S.map(toArray) (entries);
-    // Find the max width
-    const sorted = S.sortBy(array => S.sum(S.map(e => e.length)(array))) (arrays);
-    const max = S.head(sorted);
-    console.log(`sorted: ${sorted}, max: ${max}`);
-    return S.joinWith(EOL)(arrays);
+    const arrays = S.map (toArray) (entries);
+    // Find the max widths
+    const sorted = S.sortBy (array => S.sum (S.map (e => e.length) (array))) (arrays);
+    const fieldWidths = S.fromMaybe ([40, 40, 40]) (S.map (S.map (e => e.length + 4)) (S.last (sorted)));
+
+    // Right justify each array entry
+    const padElems = S.zipWith (width => text => padLeft (width) (text)) (fieldWidths);
+    const padded = S.map (array => S.joinWith ('') (padElems (array))) (arrays);
+
+    // Finally, each entry occupies one line
+    return S.joinWith (EOL) (padded);
 };
 
 
