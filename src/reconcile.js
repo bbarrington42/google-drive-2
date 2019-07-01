@@ -34,9 +34,14 @@ const unAccountedFor = statement => receipts => {
 // Generate report from unaccounted for entries
 // todo Consider preserving original text from the statement
 // todo Also, pad line items so that columns are aligned
-const buildReport = entries => {const buildLine = entry =>
-    S.joinWith(' '.repeat(4)) ([entry.name, entry.date, entry.amount]);
-    return S.joinWith(EOL)(S.map(buildLine) (entries));
+const buildReport = entries => {
+    const toArray = entry => [entry.name, entry.date, entry.amount];
+    const arrays = S.map(toArray) (entries);
+    // Find the max width
+    const sorted = S.sortBy(array => S.sum(S.map(e => e.length)(array))) (arrays);
+    const max = S.head(sorted);
+    console.log(`sorted: ${sorted}, max: ${max}`);
+    return S.joinWith(EOL)(arrays);
 };
 
 
