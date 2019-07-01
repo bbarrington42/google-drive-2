@@ -12,10 +12,10 @@ const S = create ({
 const {readJson, getFolder} = require ('./api');
 const {summary} = require ('../lib/summary');
 const {getCharges} = require ('../lib/statement');
-const {runFuture, readFile} = require ('../lib/misc');
+const {runFuture, readFile, padLeft, padRight, padCenter} = require ('../lib/misc');
 
 const Future = require ('fluture');
-const EOL = require('os').EOL;
+const EOL = require ('os').EOL;
 
 
 const unAccountedFor = statement => receipts => {
@@ -34,9 +34,9 @@ const unAccountedFor = statement => receipts => {
 // Generate report from unaccounted for entries
 // todo Consider preserving original text from the statement
 // todo Also, pad line items so that columns are aligned
-const buildReport = entries => {
-  const buildLine = entry => S.joinWith(' '.repeat(4)) ([entry.name, entry.date, entry.amount]);
-  return S.joinWith(EOL)(S.map(buildLine) (entries));
+const buildReport = entries => {const buildLine = entry =>
+    S.joinWith(' '.repeat(4)) ([entry.name, entry.date, entry.amount]);
+    return S.joinWith(EOL)(S.map(buildLine) (entries));
 };
 
 
@@ -48,7 +48,7 @@ const buildReport = entries => {
 
 
 // todo Get locally just for testing
-const json = S.map(str => S.Just(JSON.parse(str)))(readFile('utf8') ('../data/master.json'));
+const json = S.map (str => S.Just (JSON.parse (str))) (readFile ('utf8') ('../data/master.json'));
 //runFuture()(json);
 
 const receipts = S.map (S.maybe ([]) (summary)) (json);
@@ -60,7 +60,7 @@ const charges = getCharges ('../data/amex-statement-jun-17.csv');
 //runFuture()(charges);
 
 // Reconciliation
-const unmatchedCharges = S.chain(receipt => S.map(charge => unAccountedFor(charge) (receipt)) (charges)) (receipts);
+const unmatchedCharges = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges)) (receipts);
 
-const report = S.map(buildReport) (unmatchedCharges);
-runFuture() (report);
+const report = S.map (buildReport) (unmatchedCharges);
+runFuture () (report);
