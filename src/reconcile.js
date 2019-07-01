@@ -24,8 +24,10 @@ const unAccountedFor = statement => receipts => {
     // However, the receipt values are string arrays whereas the statement values are single strings
     const isEqual = statement => receipt => {
         const match = receipt => statement => S.any (S.equals (statement)) (receipt);
-        return match (receipt.amount) (statement.amount) ? (match (receipt.date) (statement.date) ?
+        const rv = match (receipt.amount) (statement.amount) ? (match (receipt.date) (statement.date) ?
             S.any (str => statement.name.includes (str)) (receipt.name) : false) : false;
+        console.log(`statement: ${JSON.stringify(statement)}, receipt: ${JSON.stringify(receipt)}, isEqual: ${rv}`);
+        return rv;
     };
     const reconciled = entry => S.isJust (S.find (isEqual (entry)) (receipts));
     return S.reject (reconciled) (statement);
