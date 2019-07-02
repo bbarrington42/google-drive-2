@@ -25,7 +25,7 @@ const unAccountedFor = statement => receipts => {
     const isEqual = statement => receipt => {
         const match = receipt => statement => S.any (S.equals (statement)) (receipt);
         const rv = match (receipt.amount) (statement.amount) ? (match (receipt.date) (statement.date) ?
-            S.any (str => statement.name.includes (str)) (receipt.name) : false) : false;
+            /*S.any (str => statement.name.includes (str)) (receipt.name)*/ true : false) : false;
         console.log (`statement: ${JSON.stringify (statement)}, receipt: ${JSON.stringify (receipt)}, isEqual: ${rv}`);
         return rv;
     };
@@ -69,10 +69,11 @@ const receipts = S.map (S.maybe ([]) (summary)) (json);
 // Get the charges from the statement and reconcile with the receipts
 // todo For now just use this file...
 const charges = getCharges ('../data/amex-statement-jun-17.csv');
-//runFuture()(charges);
+//runFuture(a => JSON.stringify(a))(charges);
 
 // Reconciliation
 const unmatchedCharges = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges)) (receipts);
 
 const report = S.map (buildReport) (unmatchedCharges);
 runFuture () (report);
+
