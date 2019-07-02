@@ -26,9 +26,10 @@ const unAccountedFor = statement => receipts => {
         const match = receipt => statement => S.any (S.equals (statement)) (receipt);
         const rv = match (receipt.amount) (statement.amount) ? (match (receipt.date) (statement.date) ?
             S.any (str => statement.name.includes (str)) (receipt.name) : false) : false;
-        console.log(`statement: ${JSON.stringify(statement)}, receipt: ${JSON.stringify(receipt)}, isEqual: ${rv}`);
+        console.log (`statement: ${JSON.stringify (statement)}, receipt: ${JSON.stringify (receipt)}, isEqual: ${rv}`);
         return rv;
     };
+    // todo This isn't working - nothing matches
     const reconciled = entry => S.isJust (S.find (isEqual (entry)) (receipts));
     return S.reject (reconciled) (statement);
 };
@@ -39,12 +40,11 @@ const unAccountedFor = statement => receipts => {
 const buildReport = entries => {
     const toArray = entry => [entry.name, entry.date, entry.amount];
     const arrays = S.map (toArray) (entries);
-    // Find the max widths
-    const sorted = S.sortBy (array => S.sum (S.map (e => e.length) (array))) (arrays);
-    const fieldWidths = S.fromMaybe ([40, 40, 40]) (S.map (S.map (e => e.length + 4)) (S.last (sorted)));
+    // Find the max width of each column
+    const fieldWidths = S.reduce (acc => array => S.zipWith (x => y => S.max (x) (y.length)) (acc) (array)) ([0, 0, 0]) (arrays);
 
     // Right justify each array entry
-    const padElems = S.zipWith (width => text => padLeft (width) (text)) (fieldWidths);
+    const padElems = S.zipWith (width => text => padLeft (width) (text)) (S.map (f => f + 4) (fieldWidths));
     const padded = S.map (array => S.joinWith ('') (padElems (array))) (arrays);
 
     // Finally, each entry occupies one line
