@@ -25,19 +25,13 @@ const unAccountedFor = statement => receipts => {
     const isEqual = statement => receipt => {
         const match = receipt => statement => S.any (S.equals (statement)) (receipt);
         // For now, match only on date and amount
-        const rv = match (receipt.amount) (statement.amount) ? (match (receipt.date) (statement.date) ?
-            // todo Figure out how to leverage sorted statement i.e. we need to account for multiple matches
-            /*S.any (str => statement.name.includes (str)) (receipt.name)*/ true : false) : false;
-        //console.log (`statement: ${JSON.stringify (statement)}, receipt: ${JSON.stringify (receipt)}, isEqual: ${rv}`);
+        const rv = match (receipt.amount) (statement.amount) ? match (receipt.date) (statement.date) : false;
+            // todo We need to account for multiple matches
+            /*S.any (str => statement.name.includes (str)) (receipt.name)*/
+        //console.log (`isEqual: ${rv}`);
         return rv;
     };
 
-    const taker = receipt => S.takeWhile (entry => {
-        console.log(`entry: ${JSON.stringify(entry)}, receipt: ${JSON.stringify(receipt)}`);
-        return isEqual (entry) (receipt)}) (statement);
-    const matching = S.reduce (acc => receipt => S.concat (acc) (taker (receipt))) ([]) (receipts);
-
-    console.log(`matching: ${typeof matching} - ${JSON.stringify(matching)}`);
 
     const reconciled = entry => S.isJust (S.find (isEqual (entry)) (receipts));
     return S.reject (reconciled) (statement);
@@ -82,6 +76,7 @@ const charges = getCharges ('../data/amex-statement-jun-17.csv');
 
 // Reconciliation
 const unmatchedCharges = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges)) (receipts);
+//runFuture()(unmatchedCharges);
 
 const report = S.map (buildReport) (unmatchedCharges);
 runFuture () (report);
