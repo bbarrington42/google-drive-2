@@ -67,16 +67,16 @@ const json = S.map (str => S.Just (JSON.parse (str))) (readFile ('utf8') ('../da
 //runFuture()(json);
 
 const receipts = S.map (S.maybe ([]) (summary)) (json);
-//runFuture() (receipts);
+runFuture(a => `${a.length} receipts`) (receipts);
 
 // Get the charges from the statement and reconcile with the receipts
 // todo For now just use this file...
 const charges = getCharges ('../data/amex-statement-jun-17.csv');
-//runFuture(a => JSON.stringify(a))(charges);
+runFuture(a => `${a.length} charges`)(charges);
 
 // Reconciliation
 const unmatchedCharges = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges)) (receipts);
-//runFuture()(unmatchedCharges);
+runFuture(a => `${a.length} not reconciled`)(unmatchedCharges);
 
 const report = S.map (buildReport) (unmatchedCharges);
 runFuture () (report);
