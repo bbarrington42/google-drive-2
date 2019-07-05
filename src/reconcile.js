@@ -23,12 +23,14 @@ const unAccountedFor = statement => receipts => {
     // Both object types have the same fields (name, date, & amount)
     // However, the receipt values are string arrays whereas the statement values are single strings
     const isEqual = statement => receipt => {
+        //console.log(`receipt: ${JSON.stringify(receipt)}`);
         const match = receipt => statement => S.any (S.equals (statement)) (receipt);
         // For now, match only on date and amount
-        const rv = match (receipt.amount) (statement.amount) ? match (receipt.date) (statement.date) : false;
+        const rv = match (receipt.amount) (statement.amount) ? (match (receipt.date) (statement.date) ? (S.any (str => statement.name.includes (str)) (receipt.name)) : false) : false;
             // todo We need to account for multiple matches
-            /*S.any (str => statement.name.includes (str)) (receipt.name)*/
-        //console.log (`isEqual: ${rv}`);
+        // if(rv) {
+        //     console.log(`statement: ${JSON.stringify(statement)}, receipt: ${JSON.stringify(receipt)}`);
+        // }
         return rv;
     };
 
