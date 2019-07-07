@@ -33,9 +33,10 @@ const unAccountedFor = statement => receipts => {
         return rv;
     };
 
+    const [duplicates, singles] = statement;
 
     const reconciled = entry => S.isJust (S.find (isEqual (entry)) (receipts));
-    return S.reject (reconciled) (statement);
+    return S.concat (duplicates) (S.reject (reconciled) (singles));
 };
 
 // todo Consider preserving original text from the statement
@@ -72,17 +73,13 @@ const receipts = S.map (S.maybe ([]) (summary)) (json);
 
 // Get the charges from the statement and reconcile with the receipts
 // todo For now just use this file...
-const allCharges = getCharges ('../data/amex-statement-jun-17.csv');
-const dups = S.map (p => p.fst) (allCharges);
-//runFuture (a => `${a.length} duplicates`) (dups);
-const charges = S.map (p => p.snd) (allCharges);
-//runFuture (a => `${a.length} charges`) (charges);
+const charges = getCharges ('../data/amex-statement-jun-17.csv');
+//runFuture(a => JSON.stringify(a)) (charges);
 
 // Reconciliation
 const unmatched = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges)) (receipts);
-const unmatchedCharges = S.chain (a => S.map (b => S.concat (a) (b)) (dups)) (unmatched);
 //runFuture (a => `${a.length} not reconciled`) (unmatchedCharges);
 
-const report = S.map (buildReport) (unmatchedCharges);
+const report = S.map (buildReport) (unmatched);
 runFuture () (report);
 
