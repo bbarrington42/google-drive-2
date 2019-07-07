@@ -25,9 +25,8 @@ const unAccountedFor = statement => receipts => {
     const isEqual = statement => receipt => {
         //console.log(`receipt: ${JSON.stringify(receipt)}`);
         const match = receipt => statement => S.any (S.equals (statement)) (receipt);
-        // For now, match only on date and amount
-        const rv = match (receipt.amount) (statement.amount) ? (match (receipt.date) (statement.date) ? (S.any (str => statement.name.includes (str)) (receipt.name)) : false) : false;
-            // todo We need to account for multiple matches
+        // Match only on date and amount
+        const rv = match (receipt.amount) (statement.amount) ? match (receipt.date) (statement.date) : false;
         // if(rv) {
         //     console.log(`statement: ${JSON.stringify(statement)}, receipt: ${JSON.stringify(receipt)}`);
         // }
@@ -69,16 +68,20 @@ const json = S.map (str => S.Just (JSON.parse (str))) (readFile ('utf8') ('../da
 //runFuture()(json);
 
 const receipts = S.map (S.maybe ([]) (summary)) (json);
-runFuture(a => `${a.length} receipts`) (receipts);
+//runFuture (a => `${a.length} receipts`) (receipts);
 
 // Get the charges from the statement and reconcile with the receipts
 // todo For now just use this file...
-const charges = getCharges ('../data/amex-statement-jun-17.csv');
-runFuture(a => `${a.length} charges`)(charges);
+const allCharges = getCharges ('../data/amex-statement-jun-17.csv');
+const dups = S.map (p => p.fst) (allCharges);
+//runFuture (a => `${a.length} duplicates`) (dups);
+const charges = S.map (p => p.snd) (allCharges);
+//runFuture (a => `${a.length} charges`) (charges);
 
 // Reconciliation
-const unmatchedCharges = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges)) (receipts);
-runFuture(a => `${a.length} not reconciled`)(unmatchedCharges);
+const unmatched = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges)) (receipts);
+const unmatchedCharges = S.chain (a => S.map (b => S.concat (a) (b)) (dups)) (unmatched);
+//runFuture (a => `${a.length} not reconciled`) (unmatchedCharges);
 
 const report = S.map (buildReport) (unmatchedCharges);
 runFuture () (report);
