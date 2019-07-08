@@ -18,6 +18,7 @@ const Future = require ('fluture');
 const EOL = require ('os').EOL;
 
 
+// todo Profile this! Really slow.
 const unAccountedFor = statement => receipts => {
     // Equality for a receipt and a statement entry
     // Both object types have the same fields (name, date, & amount)
@@ -78,7 +79,7 @@ const charges = getCharges ('../data/amex-statement-jun-17.csv');
 
 // Reconciliation
 const unmatched = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges)) (receipts);
-//runFuture (a => `${a.length} not reconciled`) (unmatchedCharges);
+//runFuture (a => `${a.length} not reconciled`) (unmatched);
 
 const report = S.map (buildReport) (unmatched);
 runFuture () (report);
