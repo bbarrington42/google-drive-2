@@ -18,7 +18,7 @@ const Future = require ('fluture');
 const EOL = require ('os').EOL;
 
 
-// todo Profile this! Really slow.
+// todo Profile this! Really slow. Consider sorting?
 const unAccountedFor = statement => receipts => {
     // Equality for a receipt and a statement entry
     // Both object types have the same fields (name, date, & amount)
