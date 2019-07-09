@@ -13,7 +13,7 @@ const S = create ({
 const Future = require ('fluture');
 
 const {list_files, getFolder, readBinary, readJson, update_file, move_file} = require ('./src/api');
-const {imageHash, inspect} = require ('./lib/misc');
+const {imageHash, pause, inspect} = require ('./lib/misc');
 
 const {extractText} = require ('./lib/extract');
 
@@ -37,7 +37,7 @@ const getText = meta => Future.chain (res => {
         hash: imageHash (text),
         text
     })) (extractText (Buffer.from (res.data)));
-}) (readBinary (meta.id));
+}) (pause (2000) (readBinary (meta.id)));
 
 
 // given an array of new receipts (each object has id, hash, name, & text array) and the existing json, return the
@@ -76,7 +76,8 @@ const run = S.pipe ([
     })) (S.traverse (Future) (getText) (meta.files))),
     S.chain (data => S.map (json => ({
         folder: data.folder,
-        json: updateJson (json.value) (data.receipts),
+        // Return an empty object if the file doesn't exist
+        json: updateJson (S.maybe ({}) (j => j) (json)) (data.receipts),
         files: S.map (({id}) => id) (data.receipts)
     })) (readJson (data.folder) ('application/json') ('master.json'))),
     //inspect (a => console.log (`after readJson: ${JSON.stringify (a)}`)),
