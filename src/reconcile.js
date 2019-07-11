@@ -21,8 +21,9 @@ const EOL = require ('os').EOL;
 // Receipt is first sorted to find the largest entry. Then statement is compared to that.
 const amountEquality = receipt => statement => {
     const sorted = S.sortBy (parseFloat) (receipt);
-    const equal = S.map (S.equals(statement)) (S.head (sorted));
-    //console.log(`receipt: ${JSON.stringify(sorted)}, statement: ${JSON.stringify(statement)}, equal: ${JSON.stringify(equal)}`);
+    const equal = S.map (S.equals (statement)) (S.head (sorted));
+    //console.log(`receipt: ${JSON.stringify(sorted)}, statement: ${JSON.stringify(statement)}, equal:
+    // ${JSON.stringify(equal)}`);
     return S.fromMaybe (false) (equal);
 };
 
@@ -73,23 +74,22 @@ const buildReport = entries => {
 //
 // const json = getJson (getFolder ('Receipts'));
 
-
-// todo Get locally just for testing
-const json = S.map (str => S.Just (JSON.parse (str))) (readFile ('utf8') ('../data/master.json'));
-//runFuture()(json);
-
-const receipts = S.map (S.maybe ([]) (summary)) (json);
-//runFuture (a => `${a.length} receipts`) (receipts);
-
-// Get the charges from the statement and reconcile with the receipts
 // todo For now just use this file...
+// todo Make 'getCharges' a pipeline
 const charges = getCharges ('../data/amex-statement-jun-17.csv');
-//runFuture(a => JSON.stringify(a)) (charges);
 
-// Reconciliation
-const unmatched = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges)) (receipts);
-//runFuture (a => `${a.length} not reconciled`) (unmatched);
+/////
+const getJson = S.map (str => S.Just (JSON.parse (str)));
+const getReceipts = S.map (S.maybe ([]) (summary));
+const getUnreconciled = S.chain (receipt => S.map (charge => unAccountedFor (charge) (receipt)) (charges));
+const getReport = S.map (buildReport);
 
-const report = S.map (buildReport) (unmatched);
-runFuture () (report);
+const result = S.pipe ([
+    getJson,
+    getReceipts,
+    getUnreconciled,
+    getReport
+]) (readFile ('utf8') ('../data/master.json'));  // todo Get locally just for testing
+
+runFuture () (result);
 
