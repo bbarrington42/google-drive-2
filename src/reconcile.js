@@ -17,6 +17,15 @@ const {runFuture, readFile, padLeft, padRight, padCenter} = require ('../lib/mis
 const Future = require ('fluture');
 const EOL = require ('os').EOL;
 
+// Equality check for amounts. 'receipt' will be a string array and statement will be a string.
+// Receipt is first sorted to find the largest entry. Then statement is compared to that.
+const amountEquality = receipt => statement => {
+    const sorted = S.sortBy (parseFloat) (receipt);
+    const equal = S.map (S.equals(statement)) (S.head (sorted));
+    //console.log(`receipt: ${JSON.stringify(sorted)}, statement: ${JSON.stringify(statement)}, equal: ${JSON.stringify(equal)}`);
+    return S.fromMaybe (false) (equal);
+};
+
 
 // todo Profile this! Really slow. Consider sorting?
 const unAccountedFor = statement => receipts => {
@@ -27,7 +36,7 @@ const unAccountedFor = statement => receipts => {
         //console.log(`receipt: ${JSON.stringify(receipt)}`);
         const match = receipt => statement => S.any (S.equals (statement)) (receipt);
         // Match only on date and amount
-        const rv = match (receipt.amount) (statement.amount) ? match (receipt.date) (statement.date) : false;
+        const rv = amountEquality (receipt.amount) (statement.amount) ? match (receipt.date) (statement.date) : false;
         // if(rv) {
         //     console.log(`statement: ${JSON.stringify(statement)}, receipt: ${JSON.stringify(receipt)}`);
         // }
