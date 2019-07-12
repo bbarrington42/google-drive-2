@@ -12,7 +12,7 @@ const S = create ({
 const {readJson, getFolder} = require ('./api');
 const {summary} = require ('../lib/summary');
 const {getCharges} = require ('../lib/statement');
-const {runFuture, readFile, padLeft, padRight, padCenter} = require ('../lib/misc');
+const {runFuture, readFile, padLeft, timerStart, timerEnd, timerLog} = require ('../lib/misc');
 
 const Future = require ('fluture');
 const EOL = require ('os').EOL;
@@ -34,13 +34,11 @@ const unAccountedFor = statement => receipts => {
     // Both object types have the same fields (name, date, & amount)
     // However, the receipt values are string arrays whereas the statement values are single strings
     const isEqual = statement => receipt => {
-        //console.log(`receipt: ${JSON.stringify(receipt)}`);
+        //console.time('equal');
         const match = receipt => statement => S.any (S.equals (statement)) (receipt);
         // Match only on date and amount
         const rv = amountEquality (receipt.amount) (statement.amount) ? match (receipt.date) (statement.date) : false;
-        // if(rv) {
-        //     console.log(`statement: ${JSON.stringify(statement)}, receipt: ${JSON.stringify(receipt)}`);
-        // }
+        //console.timeEnd('equal');
         return rv;
     };
 
@@ -85,10 +83,15 @@ const getUnreconciled = S.chain (receipt => S.map (charge => unAccountedFor (cha
 const getReport = S.map (buildReport);
 
 const result = S.pipe ([
+    timerStart ('reconcile'),
     getJson,
+    timerLog ('got json') ('reconcile'),
     getReceipts,
+    timerLog ('got receipts') ('reconcile'),
     getUnreconciled,
-    getReport
+    timerLog ('got unreconciled') ('reconcile'),
+    getReport,
+    timerEnd ('reconcile')
 ]) (readFile ('utf8') ('../data/master.json'));  // todo Get locally just for testing
 
 runFuture () (result);
