@@ -12,7 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/sanctuary": "^0.14.2",
-    "aws-sdk": "^2.475.0",
+    "aws-sdk": "^2.814.0",
     "fluture": "^11.0.1",
     "fluture-sanctuary-types": "^4.0.0",
     "googleapis": "^40.0.0",
